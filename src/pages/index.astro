@@ -1,0 +1,109 @@
+---
+import Layout from "../components/Layout.astro";
+import { featuredImages } from "../data/site";
+---
+
+<Layout title="Sacred Veil | Esküvői fotós Magyarországon" description="Sacred Veil esküvői fotózás Magyarországon: elegáns, érzékeny és időtálló történetmesélés az esküvő napjáról.">
+  <section class="relative min-h-[92vh] overflow-hidden pt-20">
+    <img src="images/hero-couple.jpg" alt="Menyasszonyi ruhás és öltönyös jegyespár elegáns esküvői portréja" class="absolute inset-0 h-full w-full object-cover" loading="eager" />
+    <div class="absolute inset-0 bg-gradient-to-r from-ink/88 via-ink/46 to-ink/8"></div>
+    <div class="relative z-10 flex min-h-[92vh] items-center px-5 pb-20 pt-24">
+      <div class="container">
+        <div class="hero-copy max-w-3xl text-ivory reveal">
+          <p class="eyebrow text-champagne">Esküvői fotózás Magyarországon</p>
+          <h1 class="display-title mt-5 text-ivory">Sacred Veil</h1>
+          <p class="mt-6 max-w-xl text-lg text-ivory/82">
+            Csendes figyelemmel, finom irányítással és elegáns képi világgal őrizzük meg azt a napot, amelyben minden pillantásnak története van.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a class="button button-primary bg-ivory text-ink" href="portfolio.html">Portfólió</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+      <div>
+        <p class="eyebrow">A nap ritmusa szerint</p>
+        <h2 class="section-title mt-4">Képek, amelyek nem csak szépek, hanem ismerősek is lesznek.</h2>
+      </div>
+      <div class="grid gap-6 text-lg text-taupe/78">
+        <p>
+          A Sacred Veil olyan pároknak készül, akik természetes, meleg és kifinomult esküvői fotózást szeretnének. Nem rendezzük túl a napot, de ott vagyunk, amikor segítség kell: egy nyugodt instrukció, egy jó fény, egy pillanatnyi csend.
+        </p>
+        <p>
+          Budapesttől a Balatonig, kastélykertektől kis falusi templomokig úgy dolgozunk, hogy a képekben megmaradjon a hely, az idő és a köztetek lévő finom energia.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-veil">
+    <div class="container">
+      <div class="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div>
+          <p class="eyebrow">Kiemelt képek</p>
+          <h2 class="section-title mt-4">Pillanatok, amelyek vezetik a történetet.</h2>
+        </div>
+        <a class="button button-secondary" href="portfolio.html">Teljes portfólió</a>
+      </div>
+      <div class="grid gap-5 md:grid-cols-3">
+        {featuredImages.map((image, index) => (
+          <div class={`media-frame ${index === 0 ? "md:col-span-2 md:row-span-2" : ""} aspect-[4/3]`}>
+            <img src={image.src} alt={image.alt} loading="lazy" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="max-w-2xl">
+        <p class="eyebrow">Csomagok</p>
+        <h2 class="section-title mt-4">Rugalmas fotózási opciók a napotok méretéhez.</h2>
+      </div>
+      <div class="mt-10 grid gap-5 md:grid-cols-3">
+        {[
+          ["Spark", "Jegyesfotózás 2-3 órában, 50 átadott képpel és 10 ajándék nyomattal.", "images/portfolio/portfolio-02.webp"],
+          ["Glow", "Polgári fotózás 3-4 órában, 200 átadott képpel és 15 ajándék nyomattal.", "images/portfolio/portfolio-12.webp"],
+          ["Sacred", "Egész napos esküvői történetmesélés 700 átadott képpel és 30 ajándék nyomattal.", "images/portfolio/portfolio-07.webp"]
+        ].map(([title, text, image]) => (
+          <a href="szolgaltatasok.html" class="group block overflow-hidden rounded-lg bg-white shadow-soft">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src={image} alt={`${title} előnézet`} loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            </div>
+            <div class="p-6">
+              <h3 class="font-display text-3xl text-ink">{title}</h3>
+              <p class="mt-3 text-sm text-taupe/72">{text}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-ink text-ivory">
+    <div class="container grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <div>
+        <p class="eyebrow text-champagne">Amit ígérünk</p>
+        <h2 class="section-title mt-4 text-ivory">Diszkrét jelenlét, időtálló utómunka, átgondolt folyamat.</h2>
+      </div>
+      <ul class="grid gap-4 text-ivory/76">
+        <li class="border-b border-white/10 pb-4">A legfontosabb pillanatokat úgy fotózzuk, hogy közben a napotok természetes maradjon.</li>
+        <li class="border-b border-white/10 pb-4">Visszafogott színek, finom bőrányalatok és olyan képvilág, amely évek múlva sem tűnik divatnak.</li>
+        <li class="border-b border-white/10 pb-4">Az első beszélgetéstől a galéria átadásáig pontos, nyugodt és emberi kommunikációra számíthattok.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container text-center">
+      <p class="eyebrow">Következő lépés</p>
+      <h2 class="section-title mx-auto mt-4 max-w-3xl">Írjatok pár sort a napotokról, és segítek megtalálni a hozzátok illő fotózási opciót.</h2>
+      <a class="button button-primary mt-8" href="kapcsolat.html">Kérek személyre szabott ajánlatot</a>
+    </div>
+  </section>
+</Layout>

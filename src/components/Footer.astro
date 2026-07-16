@@ -1,0 +1,37 @@
+---
+import { navItems } from "../data/site";
+---
+
+<footer class="border-t border-taupe/10 bg-ink px-5 py-14 text-ivory">
+  <div class="container grid gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+    <div>
+      <a href="index.html" class="inline-flex items-center gap-3 font-display text-4xl">
+        <span class="brand-mark h-11 w-11">
+          <img src="images/brand/sacred-veil-logo-transparent.png" alt="" loading="lazy" />
+        </span>
+        <span>Sacred Veil</span>
+      </a>
+      <p class="mt-4 max-w-md text-sm text-ivory/72">
+        Modern, letisztult és érzelmes esküvői fotózás magyar pároknak. Finom jelenlét, természetes pillanatok, elegáns képi világ.
+      </p>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold uppercase tracking-[0.14em] text-champagne">Oldalak</h2>
+      <div class="mt-4 grid gap-2 text-sm text-ivory/78">
+        {navItems.map((item) => <a class="hover:text-white" href={item.href}>{item.label}</a>)}
+        <a class="hover:text-white" href="aszf.html">Általános Szerződési Feltételek</a>
+      </div>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold uppercase tracking-[0.14em] text-champagne">Kapcsolat</h2>
+      <div class="mt-4 grid gap-2 text-sm text-ivory/78">
+        <a href="mailto:hello@sacredveil.hu">hello@sacredveil.hu</a>
+        <a href="tel:+3612345678">+36 1 234 5678</a>
+        <span>Magyarország</span>
+      </div>
+    </div>
+  </div>
+  <div class="container mt-10 border-t border-white/10 pt-6 text-xs text-ivory/56">
+    © 2026 Sacred Veil. Minden jog fenntartva.
+  </div>
+</footer>

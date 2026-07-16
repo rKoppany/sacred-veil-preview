@@ -1,0 +1,36 @@
+---
+interface Props {
+  service: {
+    title: string;
+    tag: string;
+    image: string;
+    description: string;
+    ideal: string;
+    includes: string[];
+  };
+  reverse?: boolean;
+}
+
+const { service, reverse = false } = Astro.props;
+---
+
+<article class={`grid items-center gap-8 py-12 lg:grid-cols-2 ${reverse ? "lg:[&>div:first-child]:order-2" : ""}`}>
+  <div class="media-frame aspect-[4/3]">
+    <img src={service.image} alt={`${service.title} hangulatkép`} loading="lazy" />
+  </div>
+  <div>
+    <p class="eyebrow">{service.tag}</p>
+    <h3 class="mt-3 font-display text-4xl leading-none text-ink md:text-5xl">{service.title}</h3>
+    <p class="mt-5 text-lg text-taupe/78">{service.description}</p>
+    <p class="mt-5 font-semibold text-ink">{service.ideal}</p>
+    <ul class="mt-5 grid gap-3 text-sm text-taupe/78">
+      {service.includes.map((item) => (
+        <li class="flex gap-3">
+          <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-rosegold"></span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+    <a class="button button-secondary mt-7" href="kapcsolat.html">Ez érdekel</a>
+  </div>
+</article>

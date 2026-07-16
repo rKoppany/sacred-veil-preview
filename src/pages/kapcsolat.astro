@@ -1,0 +1,84 @@
+---
+import Layout from "../components/Layout.astro";
+import PageHero from "../components/PageHero.astro";
+---
+
+<Layout title="Kapcsolat és árajánlatkérés | Sacred Veil" description="Kérj személyre szabott ajánlatot esküvői, polgári vagy jegyesfotózásra a Sacred Veiltől.">
+  <PageHero eyebrow="Kapcsolat" title="Meséljetek pár sort a napotokról." lead="Az ajánlatkéréshez nincs szükség ÁSZF elfogadására. A legfontosabb, hogy lássam, milyen fotózásban gondolkodtok, mikor és hol lesz az esemény." image="images/portfolio/portfolio-02.webp" />
+
+  <section class="section pt-0">
+    <div class="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <form class="grid gap-5 rounded-lg bg-white p-6 shadow-soft md:p-8" data-contact-form novalidate>
+        <div class="grid gap-2">
+          <label class="font-semibold text-ink" for="name">Név *</label>
+          <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="name" name="name" required autocomplete="name" />
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="email">E-mail cím *</label>
+            <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="email" name="email" type="email" required autocomplete="email" />
+          </div>
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="phone">Telefonszám *</label>
+            <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="phone" name="phone" required autocomplete="tel" />
+          </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="date">Tervezett dátum</label>
+            <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="date" name="date" type="date" />
+          </div>
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="location">Helyszín vagy város</label>
+            <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="location" name="location" />
+          </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="serviceType">Érdeklődés típusa *</label>
+            <select class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="serviceType" name="serviceType" required>
+              <option value="">Válasszatok</option>
+              <option>Jegyesfotózás</option>
+              <option>Polgári fotózás</option>
+              <option>Esküvői fotózás</option>
+              <option>Több szolgáltatás</option>
+            </select>
+          </div>
+          <div class="grid gap-2">
+            <label class="font-semibold text-ink" for="packageInterest">Csomag / opció</label>
+            <select class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="packageInterest" name="packageInterest">
+              <option value="">Még nem tudjuk</option>
+              <option>Spark csomag</option>
+              <option>Glow csomag</option>
+              <option>Ethereal csomag</option>
+              <option>Blessed csomag</option>
+              <option>Sacred csomag</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid gap-2">
+          <label class="font-semibold text-ink" for="message">Rövid üzenet</label>
+          <textarea class="min-h-36 rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="message" name="message" placeholder="Írjátok meg, milyen hangulatú napot terveztek, és mi lenne nektek fontos a fotózásban."></textarea>
+        </div>
+        <p class="hidden rounded-md bg-rosegold/12 px-4 py-3 text-sm text-ink" data-form-message></p>
+        <button class="button button-primary justify-self-start" type="submit">Ajánlatkérés elküldése</button>
+      </form>
+
+      <aside class="grid content-start gap-6">
+        <div class="rounded-lg bg-veil p-8">
+          <p class="eyebrow">Közvetlen kapcsolat</p>
+          <h2 class="mt-4 font-display text-4xl leading-none text-ink">Válasz személyre szabottan.</h2>
+          <div class="mt-6 grid gap-2 text-taupe/78">
+            <a href="mailto:hello@sacredveil.hu">hello@sacredveil.hu</a>
+            <a href="tel:+3612345678">+36 1 234 5678</a>
+            <span>Magyarország</span>
+          </div>
+        </div>
+        <div class="media-frame aspect-[4/5]">
+          <img src="images/portfolio/portfolio-10.webp" alt="Meghitt jegyesfotózás részlete" loading="lazy" />
+        </div>
+      </aside>
+    </div>
+  </section>
+
+</Layout>

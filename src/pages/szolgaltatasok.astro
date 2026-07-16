@@ -1,0 +1,190 @@
+---
+import Layout from "../components/Layout.astro";
+import PageHero from "../components/PageHero.astro";
+
+const packages = [
+  {
+    type: "Jegyes",
+    name: "Spark",
+    serviceType: "Jegyesfotózás",
+    price: "60.000 Ft",
+    duration: "2-3 óra",
+    images: "50 kép",
+    prints: "10 db",
+    description: "Könnyed, természetes jegyesfotózás egy szabadon választott helyszínen.",
+    includes: ["Országosan választható helyszín"]
+  },
+  {
+    type: "Polgári",
+    name: "Glow",
+    serviceType: "Polgári fotózás",
+    price: "100.000 Ft",
+    duration: "3-4 óra",
+    images: "200 kép",
+    prints: "15 db",
+    description: "Rövidebb, koncentrált fotózás a polgári szertartás és a családi pillanatok köré építve.",
+    includes: [
+      "Készülődés",
+      "Polgári szertartás",
+      "Gratulációk",
+      "Családi- és csoportképek",
+      "Rövid kreatív, ha van rá lehetőség"
+    ]
+  },
+  {
+    type: "Esküvő",
+    name: "Ethereal",
+    serviceType: "Esküvői fotózás",
+    price: "180.000 Ft",
+    duration: "4-6 óra",
+    images: "400 kép",
+    prints: "20 db",
+    description: "Letisztult esküvői jelenlét a nap legfontosabb eseményeire és részleteire hangolva.",
+    includes: ["Készülődés", "Részletek", "Ceremónia", "Gratulációk", "Családi- és csoportképek"]
+  },
+  {
+    type: "Esküvő",
+    name: "Blessed",
+    serviceType: "Esküvői fotózás",
+    price: "240.000 Ft",
+    duration: "6-8 óra",
+    images: "500 kép",
+    prints: "25 db",
+    description: "Bővebb történetmesélés a készülődéstől az ünneplés fontosabb esti pillanataiig.",
+    featured: true,
+    includes: [
+      "Készülődés",
+      "Részletek",
+      "Ceremónia",
+      "Gratulációk",
+      "Családi- és csoportképek",
+      "Menyasszonytánc",
+      "Aznapi kreatív fotózás külön napra megegyezés szerint"
+    ]
+  },
+  {
+    type: "Esküvő",
+    name: "Sacred",
+    serviceType: "Esküvői fotózás",
+    price: "300.000 Ft",
+    duration: "Egész nap",
+    images: "700 kép",
+    prints: "30 db",
+    description: "Teljes napos, nyugodt jelenlét azoknak, akik a nap teljes ritmusát szeretnék megőrizni.",
+    includes: [
+      "Készülődés",
+      "Részletek",
+      "Ceremónia",
+      "Gratulációk",
+      "Családi- és csoportképek",
+      "Lagzi",
+      "Kreatív fotózás akár külön napon is"
+    ]
+  }
+];
+
+const notes = [
+  {
+    title: "Ajándék nyomatok",
+    text: "Minden csomag tartalmaz nyomtatott fényképeket."
+  },
+  {
+    title: "Árak",
+    text: "Az árak forintban értendők."
+  },
+  {
+    title: "Egyeztetés",
+    text: "Egyedi igények külön egyeztetéssel."
+  }
+];
+---
+
+<Layout title="Csomagok | Sacred Veil" description="Sacred Veil jegyes, polgári és esküvői fotózási csomagok árakkal, átadott képszámmal és ajándék nyomatokkal.">
+  <PageHero eyebrow="Csomagok" title="Jegyes, polgári és esküvői fotózás átlátható csomagokban." lead="Válasszatok a napotok ritmusához illő jelenlétet: rövid, letisztult polgári fotózástól a teljes napos esküvői történetmesélésig." image="images/portfolio/portfolio-12.webp" class="packages-hero" imageClass="packages-hero-image" />
+
+  <section class="px-5 pb-10">
+    <div class="container">
+      <div class="package-promo">
+        <div>
+          <p class="eyebrow text-champagne">15% kedvezmény</p>
+          <h2 class="mt-3 font-display text-4xl leading-none text-ink">2026-os Last Minute kedvezmény</h2>
+        </div>
+        <p>Minden 2026. augusztus 1-ig megkötött szerződésre, ahol az esküvő legkésőbb 2026. október 31-én van.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0">
+    <div class="container">
+      <div class="package-intro">
+        <p class="eyebrow">Áttekintés</p>
+        <h2 class="section-title mt-4">Öt csomag, egy közös alap: figyelmes jelenlét és gondosan átadott képek.</h2>
+      </div>
+
+      <div class="package-grid">
+        {packages.map((item) => (
+          <article class={`package-card ${item.featured ? "is-featured" : ""}`}>
+            {item.featured && <span class="package-ribbon">Legnépszerűbb</span>}
+            <div>
+              <p class="eyebrow">{item.type}</p>
+              <h3>{item.name}</h3>
+              <p class="package-description">{item.description}</p>
+            </div>
+
+            <div class="package-price">
+              <span>{item.price}</span>
+              <small>{item.duration} / {item.images}</small>
+            </div>
+
+            <ul class="package-facts" aria-label={`${item.name} csomag tartalma`}>
+              {item.includes.map((included) => (
+                <li>
+                  <span></span>
+                  {included}
+                </li>
+              ))}
+            </ul>
+
+            <div class="package-print">
+              <strong>Ajándék nyomat</strong>
+              <span>{item.prints}</span>
+            </div>
+
+            <a
+              class={`button ${item.featured ? "button-primary bg-ivory text-ink" : "button-secondary"} package-quote`}
+              href={`kapcsolat.html?tipus=${encodeURIComponent(item.serviceType)}&csomag=${encodeURIComponent(`${item.name} csomag`)}`}
+            >
+              Árajánlatot kérek erre
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-veil">
+    <div class="container">
+      <div class="package-notes">
+        {notes.map((note) => (
+          <article>
+            <p class="eyebrow">{note.title}</p>
+            <p>{note.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-ink text-ivory">
+    <div class="container grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <div>
+        <p class="eyebrow text-champagne">Személyre szabva</p>
+        <h2 class="section-title mt-4 text-ivory">Ha a napotok ritmusa eltér a csomagoktól, külön egyeztetünk.</h2>
+      </div>
+      <div class="grid gap-5 text-ivory/78">
+        <p>A csomagok kiindulópontként segítenek átlátni a lehetőségeket. A pontos ajánlatot mindig a dátum, helyszín, időtartam és a nap menete alapján véglegesítjük.</p>
+        <a class="button button-primary package-final-quote" href="kapcsolat.html">Árajánlatot kérek</a>
+      </div>
+    </div>
+  </section>
+</Layout>
