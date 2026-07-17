@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ASTRO_SITE: https://rkoppany.github.io
+      ASTRO_BASE: /sacred-veil-preview/
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v7

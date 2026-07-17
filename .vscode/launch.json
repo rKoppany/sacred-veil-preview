@@ -7,8 +7,8 @@
         {
             "type": "editor-browser",
             "request": "launch",
-            "name": "Open index.html",
-            "url": "file:///c%3A/Users/rolan/Desktop/Astro%20Website/dist/index.html"
+            "name": "Open local Astro site",
+            "url": "http://localhost:4321/"
         }
     ]
 }
