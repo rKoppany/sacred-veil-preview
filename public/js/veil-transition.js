@@ -34,12 +34,24 @@ const setupContactForm = () => {
   }
 
   form.dataset.formBound = "true";
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     if (!(form instanceof HTMLFormElement)) {
       return;
     }
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    const endpoint = form.getAttribute("data-contact-endpoint");
+    const originalButtonText = submitButton?.textContent || "";
+
+    const showMessage = (text) => {
+      message?.classList.remove("hidden");
+
+      if (message) {
+        message.textContent = text;
+      }
+    };
 
     const required = Array.from(form.querySelectorAll("[required]"));
     const invalid = required.find((field) => {
@@ -51,12 +63,7 @@ const setupContactForm = () => {
     });
 
     if (invalid instanceof HTMLElement) {
-      message?.classList.remove("hidden");
-
-      if (message) {
-        message.textContent = "Kérlek töltsétek ki a csillaggal jelölt mezőket. A telefonszám kötelező, az ÁSZF elfogadása nem szükséges.";
-      }
-
+      showMessage("Kérlek töltsétek ki a csillaggal jelölt mezőket. A telefonszám kötelező, az ÁSZF elfogadása nem szükséges.");
       invalid.focus();
       return;
     }
@@ -64,23 +71,50 @@ const setupContactForm = () => {
     const email = form.querySelector("#email");
 
     if (email instanceof HTMLInputElement && !email.checkValidity()) {
-      message?.classList.remove("hidden");
-
-      if (message) {
-        message.textContent = "Kérlek adjatok meg érvényes e-mail címet.";
-      }
-
+      showMessage("Kérlek adjatok meg érvényes e-mail címet.");
       email.focus();
       return;
     }
 
-    message?.classList.remove("hidden");
-
-    if (message) {
-      message.textContent = "Köszönöm, az űrlap demó módban sikeresen validált. A beküldést később form service vagy e-mail endpoint fogadhatja.";
+    if (!endpoint) {
+      showMessage("Az ajánlatkérő űrlap technikai beállítása hiányzik. Kérlek próbáljátok meg később.");
+      return;
     }
 
-    form.reset();
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    if (submitButton instanceof HTMLButtonElement) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Küldés folyamatban...";
+    }
+
+    showMessage("Az ajánlatkérés küldése folyamatban van...");
+
+    try {
+      const response = await fetch(endpoint, {
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: "POST"
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.ok === false) {
+        showMessage(result.message || "Az üzenet küldése most nem sikerült. Kérlek próbáljátok meg később.");
+        return;
+      }
+
+      showMessage(result.message || "Köszönjük, az ajánlatkérés megérkezett. Hamarosan jelentkezünk.");
+      form.reset();
+    } catch (error) {
+      showMessage("Az üzenet küldése most nem sikerült. Kérlek ellenőrizzétek az internetkapcsolatot, majd próbáljátok meg újra.");
+    } finally {
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+      }
+    }
   });
 };
 

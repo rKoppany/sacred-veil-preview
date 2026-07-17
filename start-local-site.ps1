@@ -51,7 +51,8 @@ function Send-Text {
 function Send-File {
   param(
     [System.Net.HttpListenerResponse]$Response,
-    [string]$Path
+    [string]$Path,
+    [bool]$HeadersOnly = $false
   )
 
   $bytes = [System.IO.File]::ReadAllBytes($Path)
@@ -59,7 +60,10 @@ function Send-File {
   $Response.ContentType = Get-ContentType -Path $Path
   $Response.ContentLength64 = $bytes.Length
   $Response.Headers["Cache-Control"] = "no-store"
-  $Response.OutputStream.Write($bytes, 0, $bytes.Length)
+
+  if (-not $HeadersOnly) {
+    $Response.OutputStream.Write($bytes, 0, $bytes.Length)
+  }
 }
 
 if ($Serve) {
@@ -89,7 +93,7 @@ if ($Serve) {
       } elseif (-not (Test-Path -LiteralPath $filePath -PathType Leaf)) {
         Send-Text -Response $context.Response -StatusCode 404 -Text "Not found"
       } else {
-        Send-File -Response $context.Response -Path $filePath
+        Send-File -Response $context.Response -Path $filePath -HeadersOnly ($context.Request.HttpMethod -eq "HEAD")
       }
     } catch {
       Send-Text -Response $context.Response -StatusCode 500 -Text "Server error"

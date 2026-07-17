@@ -8,7 +8,7 @@ import PageHero from "../components/PageHero.astro";
 
   <section class="section pt-0">
     <div class="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-      <form class="grid gap-5 rounded-lg bg-white p-6 shadow-soft md:p-8" data-contact-form novalidate>
+      <form class="grid gap-5 rounded-lg bg-white p-6 shadow-soft md:p-8" data-contact-form data-contact-endpoint="https://sacred-veil-contact.roland-koppany.workers.dev" novalidate>
         <div class="grid gap-2">
           <label class="font-semibold text-ink" for="name">Név *</label>
           <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="name" name="name" required autocomplete="name" />
@@ -60,7 +60,11 @@ import PageHero from "../components/PageHero.astro";
           <label class="font-semibold text-ink" for="message">Rövid üzenet</label>
           <textarea class="min-h-36 rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="message" name="message" placeholder="Írjátok meg, milyen hangulatú napot terveztek, és mi lenne nektek fontos a fotózásban."></textarea>
         </div>
-        <p class="hidden rounded-md bg-rosegold/12 px-4 py-3 text-sm text-ink" data-form-message></p>
+        <div class="contact-honeypot" aria-hidden="true">
+          <label for="website">Weboldal</label>
+          <input id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <p class="hidden rounded-md bg-rosegold/12 px-4 py-3 text-sm text-ink" data-form-message aria-live="polite"></p>
         <button class="button button-primary justify-self-start" type="submit">Ajánlatkérés elküldése</button>
       </form>
 

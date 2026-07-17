@@ -12,6 +12,8 @@ await Promise.all(
       const path = join(distDir, file);
       const html = await readFile(path, "utf8");
       const normalized = html
+        .replaceAll('href="/sacred-veil-preview/_astro/', 'href="_astro/')
+        .replaceAll('src="/sacred-veil-preview/_astro/', 'src="_astro/')
         .replaceAll('href="/_astro/', 'href="_astro/')
         .replaceAll('src="/_astro/', 'src="_astro/')
         .replaceAll('href="/./_astro/', 'href="_astro/')
