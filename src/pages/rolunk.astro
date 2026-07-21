@@ -4,16 +4,38 @@ import PageHero from "../components/PageHero.astro";
 ---
 
 <Layout title="Rólunk | Sacred Veil" description="Ismerd meg a Sacred Veil esküvői fotózás szemléletét: elegáns, figyelmes és természetes történetmesélés.">
-  <PageHero eyebrow="Rólunk" title="Nyugodt jelenlét a legfontosabb pillanatokban." lead="A Sacred Veil nem csak képeket készít, hanem olyan emlékanyagot, amelyben a nap ritmusa, a kapcsolódások és a finom részletek együtt maradnak meg." image="images/profile.webp" />
+  <PageHero
+    eyebrow="Rólunk"
+    lead={["Kedves Jegyespár!", "Köszönjük, hogy időt szántok ránk, és megismerkedtetek a Sacred Veil világával."]}
+    image="images/profile.webp"
+  />
 
   <section class="section pt-0">
     <div class="container grid gap-10 lg:grid-cols-[1fr_0.9fr]">
       <div class="grid gap-6 text-lg text-taupe/78">
         <p>
-          A fotózás számomra figyelmes jelenlét. Az esküvő napján nem az a cél, hogy minden pillanatot megrendezzünk, hanem hogy a valódi érzelmeknek legyen tere. Segítek, amikor irányításra van szükség, és háttérben maradok, amikor a pillanat önmagáért beszél.
+          Ezen a ponton írhatnánk arról, hogy az őszinte pillanatokat keressük, hogy a háttérben maradunk, vagy hogy észre sem vesztek majd bennünket az esküvőtök napján. Bár mindez fontos számunkra, úgy gondoljuk ezek nem különleges ígéretek, hanem minden esküvői fotós munkájának alapjai.
         </p>
         <p>
-          A Sacred Veil vizuális világa világos, elegáns és emberközeli. Fontos a jó fény, a tiszta kompozíció, a természetes mozdulat és az a nyugalom, amelyben a párok önmaguk tudnak lenni.
+          A Sacred Veil nem csupán egy név, hanem egy bizonyos tartás: csendesebb, figyelmesebb, talán kissé régi vágású abban az értelemben, hogy egy fontos nap körül nem kell mindennek hangosnak lennie ahhoz, hogy súlya legyen.
+        </p>
+        <p>
+          Tudjuk, hogy egy esküvő mögött hónapok, sokszor évek szervezése áll. Helyszín, dekoráció, meghívók, ruha, vacsora, zene, torta, család, barátok és döntések; a gondosság nyomai, amellyel két ember megérkezik egy közös ünnepbe.
+        </p>
+        <p>
+          Mi ehhez szeretnénk méltón kapcsolódni, és semmiképpen sem elvenni belőle.
+        </p>
+        <p>
+          Ezért az első beszélgetés nálunk nem formaság: szeretnénk megérteni, milyen világot építetek arra a napra, milyen tempóban érzitek otthon magatokat, és hol van az a finom határ, ahol a jelenlétünk segítség. Az esküvőn nem rendezőként szeretnénk megjelenni, hanem olyan társaságként, amely odafigyel rátok; amikor szükséges, adunk kapaszkodót, amikor a nap magától beszél, inkább hallgatunk.
+        </p>
+        <p>
+          Azt szeretnénk, hogy később ne csak arra emlékezzetek, hogyan nézett ki az esküvőtök, hanem arra is, milyen volt benne lenni: a várakozásban, a meghatódásban, a nevetésekben, az egymás felé fordulásban.
+        </p>
+        <p>
+          Ha ez a gondolkodás közel áll hozzátok, örömmel ismerünk meg benneteket.
+        </p>
+        <p>
+          Szívből gratulálunk az eljegyzésetekhez, és sok boldogságot kívánunk,<br />A Sacred Veil csapata
         </p>
       </div>
       <div class="rounded-lg bg-veil p-8">
@@ -21,7 +43,6 @@ import PageHero from "../components/PageHero.astro";
         <ul class="mt-6 grid gap-4 text-sm text-taupe/76">
           <li>Finom instrukciók, amelyek nem veszik el a természetességet.</li>
           <li>Átgondolt képi ritmus a részletektől a nagy jelenetekig.</li>
-          <li>Biztonságos, nyugodt légkör a kamera előtt.</li>
           <li>Elegáns utómunka, amely nem írja felül az emléket.</li>
         </ul>
       </div>
@@ -35,7 +56,7 @@ import PageHero from "../components/PageHero.astro";
       </div>
       <div>
         <p class="eyebrow">Bizalom</p>
-        <h2 class="section-title mt-4">A jó esküvői fotózás már az első beszélgetésnél elkezdődik.</h2>
+        <h2 class="section-title mt-4">A jó esküvői képek keretét az első beszélgetés adja</h2>
         <p class="mt-6 text-lg text-taupe/78">Az ajánlatkérés után nem sablonválaszt küldök, hanem a ti napotokhoz illő javaslatot. Így a fotózás ritmusa, hossza és hangulata is a valódi igényekhez igazodik.</p>
         <div class="mt-8 flex flex-wrap gap-3">
           <a class="button button-primary" href="portfolio.html">Portfólió</a>

@@ -1,22 +1,38 @@
 ---
 interface Props {
   eyebrow: string;
-  title: string;
-  lead: string;
+  title?: string;
+  lead?: string | string[];
   image?: string;
   class?: string;
   imageClass?: string;
 }
 
 const { eyebrow, title, lead, image, class: className = "", imageClass = "" } = Astro.props;
+const hasTitle = Boolean(title);
+const hasLead = Array.isArray(lead) ? lead.length > 0 : Boolean(lead);
 ---
 
 <section class={`section pt-32 page-hero ${className}`}>
   <div class="container grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
     <div class="reveal">
       <p class="eyebrow">{eyebrow}</p>
-      <h1 class="page-title mt-4">{title}</h1>
-      <p class="mt-6 max-w-2xl text-lg text-taupe/78">{lead}</p>
+      {hasTitle && <h1 class="page-title mt-4">{title}</h1>}
+      {hasLead && (
+        Array.isArray(lead) ? (
+          <div class="mt-6 grid max-w-2xl gap-4 text-lg text-taupe/78">
+            {lead.map((block) => (
+              <p>
+                {block.split("\n").map((line, index, lines) => (
+                  <>{line}{index < lines.length - 1 && <br />}</>
+                ))}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-6 max-w-2xl text-lg text-taupe/78">{lead}</p>
+        )
+      )}
     </div>
     {image && (
       <div class={`media-frame aspect-[4/3] reveal ${imageClass}`}>
