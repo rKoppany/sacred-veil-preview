@@ -494,8 +494,6 @@ const replacePageContent = (nextDocument, pageUrl = window.location.href) => {
       currentElement.replaceWith(nextElement.cloneNode(true));
     }
   });
-
-  setupPageInteractions(pageUrl);
 };
 
 const loadDocument = async (url) => {
@@ -1179,11 +1177,14 @@ const keepScrollLocked = (event) => {
   window.scrollTo(window.scrollX, lockedScrollY);
 };
 
-const navigateWithoutAnimation = async (url) => {
+const navigateWithoutAnimation = async (url, shouldPush = false) => {
   const nextDocument = await loadDocument(url);
   replacePageContent(nextDocument, url.href);
   window.scrollTo(0, 0);
-  window.history.pushState({}, "", url.href);
+  if (shouldPush) {
+    window.history.pushState({}, "", url.href);
+  }
+  setupPageInteractions(url.href);
 };
 
 const navigateWithPageTurn = async (url) => {
@@ -1196,7 +1197,7 @@ const navigateWithPageTurn = async (url) => {
 
   try {
     if (reducedMotion) {
-      await navigateWithoutAnimation(url);
+      await navigateWithoutAnimation(url, true);
       finishNavigation();
       return;
     }
@@ -1218,6 +1219,7 @@ const navigateWithPageTurn = async (url) => {
     replacePageContent(nextDocument, url.href);
     window.scrollTo(0, 0);
     window.history.pushState({}, "", url.href);
+    setupPageInteractions(url.href);
 
     if (snapshot) {
       await animateVeilCanvas(transitionLayer, snapshot, revealMask);
