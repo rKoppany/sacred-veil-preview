@@ -5,7 +5,7 @@ import PageHero from "../components/PageHero.astro";
 const packages = [
   {
     type: "Jegyes",
-    name: "Spark",
+    name: "Noir",
     serviceType: "Jegyesfotózás",
     price: "60.000 Ft",
     duration: "2-3 óra",
@@ -16,7 +16,7 @@ const packages = [
   },
   {
     type: "Polgári",
-    name: "Glow",
+    name: "Essence",
     serviceType: "Polgári fotózás",
     price: "100.000 Ft",
     duration: "3-4 óra",
@@ -33,7 +33,7 @@ const packages = [
   },
   {
     type: "Esküvő",
-    name: "Ethereal",
+    name: "Élan",
     serviceType: "Esküvői fotózás",
     price: "180.000 Ft",
     duration: "4-6 óra",
@@ -44,7 +44,7 @@ const packages = [
   },
   {
     type: "Esküvő",
-    name: "Blessed",
+    name: "Aurora",
     serviceType: "Esküvői fotózás",
     price: "240.000 Ft",
     duration: "6-8 óra",
@@ -64,7 +64,7 @@ const packages = [
   },
   {
     type: "Esküvő",
-    name: "Sacred",
+    name: "Sacrée",
     serviceType: "Esküvői fotózás",
     price: "300.000 Ft",
     duration: "Egész nap",
@@ -118,15 +118,16 @@ const notes = [
     <div class="container">
       <div class="package-intro">
         <p class="eyebrow">Áttekintés</p>
-        <h2 class="section-title mt-4">5 Kollekció<br />Egyetlen Sacred Veil élmény</h2>
+        <h2 class="section-title package-overview-title mt-4">5 Kollekció<br />Egyetlen Sacred Veil élmény</h2>
       </div>
 
       <div class="package-grid">
         {packages.map((item) => (
           <article class={`package-card ${item.featured ? "is-featured" : ""}`}>
             {item.featured && <span class="package-ribbon">Legnépszerűbb</span>}
-            <div>
+            <div class="package-head">
               <p class="eyebrow">{item.type}</p>
+              <p class="package-signature">Signature</p>
               <h3>{item.name}</h3>
               <p class="package-description">{item.description}</p>
             </div>
