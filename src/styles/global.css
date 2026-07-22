@@ -195,6 +195,11 @@ body.is-page-turning footer {
   max-width: 34rem;
 }
 
+.package-promo > .eyebrow {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
 .package-intro {
   max-width: 48rem;
 }
@@ -439,8 +444,13 @@ body.is-page-turning footer {
   display: block;
   height: 100%;
   object-fit: contain;
-  transition: transform 260ms ease;
+  opacity: 0;
+  transition: opacity 260ms ease, transform 260ms ease;
   width: 100%;
+}
+
+.portfolio-card.has-image img {
+  opacity: 1;
 }
 
 .portfolio-card:hover {

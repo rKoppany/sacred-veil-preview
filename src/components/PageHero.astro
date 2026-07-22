@@ -14,10 +14,10 @@ const hasLead = Array.isArray(lead) ? lead.length > 0 : Boolean(lead);
 ---
 
 <section class={`section pt-32 page-hero ${className}`}>
-  <div class="container grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-    <div class="reveal">
-      <p class="eyebrow">{eyebrow}</p>
-      {hasTitle && <h1 class="page-title mt-4">{title}</h1>}
+  <div class="container grid items-center gap-x-10 gap-y-4 lg:grid-cols-[0.9fr_1.1fr]">
+    <p class="eyebrow reveal lg:col-span-2">{eyebrow}</p>
+    <div class={`reveal ${!image ? "lg:col-span-2" : ""}`}>
+      {hasTitle && <h1 class="page-title">{title}</h1>}
       {hasLead && (
         Array.isArray(lead) ? (
           <div class="mt-6 grid max-w-2xl gap-4 text-lg text-taupe/78">

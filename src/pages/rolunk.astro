@@ -1,18 +1,16 @@
 ---
 import Layout from "../components/Layout.astro";
-import PageHero from "../components/PageHero.astro";
 ---
 
 <Layout title="Rólunk | Sacred Veil" description="Ismerd meg a Sacred Veil esküvői fotózás szemléletét: elegáns, figyelmes és természetes történetmesélés.">
-  <PageHero
-    eyebrow="Rólunk"
-    lead={["Kedves Jegyespár!", "Köszönjük, hogy időt szántok ránk, és megismerkedtetek a Sacred Veil világával."]}
-    image="images/profile.webp"
-  />
-
-  <section class="section pt-0">
-    <div class="container grid gap-10 lg:grid-cols-[1fr_0.9fr]">
-      <div class="grid gap-6 text-lg text-taupe/78">
+  <section class="section pt-32 page-hero">
+    <div class="container grid items-start gap-x-10 gap-y-4 lg:grid-cols-[1fr_0.72fr]">
+      <p class="eyebrow reveal lg:col-span-2">Rólunk</p>
+      <div class="grid gap-5 text-lg text-taupe/78 reveal">
+        <p>Kedves Jegyespár!</p>
+        <p>
+          Köszönjük, hogy időt szántok ránk, és megismerkedtetek a Sacred Veil világával.
+        </p>
         <p>
           Ezen a ponton írhatnánk arról, hogy az őszinte pillanatokat keressük, hogy a háttérben maradunk, vagy hogy észre sem vesztek majd bennünket az esküvőtök napján. Bár mindez fontos számunkra, úgy gondoljuk ezek nem különleges ígéretek, hanem minden esküvői fotós munkájának alapjai.
         </p>
@@ -26,7 +24,28 @@ import PageHero from "../components/PageHero.astro";
           Mi ehhez szeretnénk méltón kapcsolódni, és semmiképpen sem elvenni belőle.
         </p>
         <p>
-          Ezért az első beszélgetés nálunk nem formaság: szeretnénk megérteni, milyen világot építetek arra a napra, milyen tempóban érzitek otthon magatokat, és hol van az a finom határ, ahol a jelenlétünk segítség. Az esküvőn nem rendezőként szeretnénk megjelenni, hanem olyan társaságként, amely odafigyel rátok; amikor szükséges, adunk kapaszkodót, amikor a nap magától beszél, inkább hallgatunk.
+          Ezért az első beszélgetés nálunk nem formaság: szeretnénk megérteni, milyen világot építetek arra a napra, milyen tempóban érzitek otthon magatokat, és hol van az a finom határ, ahol a jelenlétünk segítség.
+        </p>
+      </div>
+      <div class="reveal lg:justify-self-end">
+        <img class="h-auto w-full max-w-md rounded-lg shadow-soft" src="images/profile.webp" alt="" loading="eager" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0">
+    <div class="container grid gap-8">
+      <div class="rounded-lg bg-veil p-8">
+        <h2 class="font-display text-4xl text-ink">Amit a fotózás közben képviselek</h2>
+        <ul class="mt-6 grid gap-4 text-sm text-taupe/76">
+          <li>Finom instrukciók, amelyek nem veszik el a természetességet.</li>
+          <li>Átgondolt képi ritmus a részletektől a nagy jelenetekig.</li>
+          <li>Elegáns utómunka, amely nem írja felül az emléket.</li>
+        </ul>
+      </div>
+      <div class="grid gap-6 text-lg text-taupe/78">
+        <p>
+          Az esküvőn nem rendezőként szeretnénk megjelenni, hanem olyan társaságként, amely odafigyel rátok; amikor szükséges, adunk kapaszkodót, amikor a nap magától beszél, inkább hallgatunk.
         </p>
         <p>
           Azt szeretnénk, hogy később ne csak arra emlékezzetek, hogyan nézett ki az esküvőtök, hanem arra is, milyen volt benne lenni: a várakozásban, a meghatódásban, a nevetésekben, az egymás felé fordulásban.
@@ -38,25 +57,17 @@ import PageHero from "../components/PageHero.astro";
           Szívből gratulálunk az eljegyzésetekhez, és sok boldogságot kívánunk,<br />A Sacred Veil csapata
         </p>
       </div>
-      <div class="rounded-lg bg-veil p-8">
-        <h2 class="font-display text-4xl text-ink">Amit a fotózás közben képviselek</h2>
-        <ul class="mt-6 grid gap-4 text-sm text-taupe/76">
-          <li>Finom instrukciók, amelyek nem veszik el a természetességet.</li>
-          <li>Átgondolt képi ritmus a részletektől a nagy jelenetekig.</li>
-          <li>Elegáns utómunka, amely nem írja felül az emléket.</li>
-        </ul>
-      </div>
     </div>
   </section>
 
   <section class="section bg-veil">
-    <div class="container grid items-center gap-8 lg:grid-cols-2">
+    <div class="container grid items-center gap-x-8 gap-y-4 lg:grid-cols-2">
+      <p class="eyebrow lg:col-span-2">Bizalom</p>
       <div class="media-frame aspect-[4/3]">
         <img src="images/portfolio/portfolio-10.webp" alt="Meghitt páros fotózás városi környezetben" loading="lazy" />
       </div>
       <div>
-        <p class="eyebrow">Bizalom</p>
-        <h2 class="section-title mt-4">A jó esküvői képek keretét az első beszélgetés adja</h2>
+        <h2 class="section-title">A jó esküvői képek keretét az első beszélgetés adja</h2>
         <p class="mt-6 text-lg text-taupe/78">Az ajánlatkérés után nem sablonválaszt küldök, hanem a ti napotokhoz illő javaslatot. Így a fotózás ritmusa, hossza és hangulata is a valódi igényekhez igazodik.</p>
         <div class="mt-8 flex flex-wrap gap-3">
           <a class="button button-primary" href="portfolio.html">Portfólió</a>

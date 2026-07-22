@@ -14,12 +14,12 @@ interface Props {
 const { service, reverse = false } = Astro.props;
 ---
 
-<article class={`grid items-center gap-8 py-12 lg:grid-cols-2 ${reverse ? "lg:[&>div:first-child]:order-2" : ""}`}>
-  <div class="media-frame aspect-[4/3]">
+<article class="grid items-center gap-x-8 gap-y-4 py-12 lg:grid-cols-2">
+  <p class="eyebrow lg:col-span-2">{service.tag}</p>
+  <div class={`media-frame aspect-[4/3] ${reverse ? "lg:order-2" : ""}`}>
     <img src={service.image} alt={`${service.title} hangulatkép`} loading="lazy" />
   </div>
-  <div>
-    <p class="eyebrow">{service.tag}</p>
+  <div class={reverse ? "lg:order-1" : ""}>
     <h3 class="mt-3 font-display text-4xl leading-none text-ink md:text-5xl">{service.title}</h3>
     <p class="mt-5 text-lg text-taupe/78">{service.description}</p>
     <p class="mt-5 font-semibold text-ink">{service.ideal}</p>

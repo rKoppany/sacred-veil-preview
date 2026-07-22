@@ -114,8 +114,10 @@ const portfolioImages = buildMixedOrder(
             alt={`Sacred Veil portfóliófotó ${index + 1}`}
             width={image.width}
             height={image.height}
-            loading={index < 10 ? "eager" : "lazy"}
+            loading={index < 18 ? "eager" : "lazy"}
+            fetchpriority={index < 8 ? "high" : "auto"}
             decoding="async"
+            data-portfolio-image
           />
         </button>
       ))}
@@ -355,6 +357,7 @@ const portfolioImages = buildMixedOrder(
   const portfolioCards = Array.from(document.querySelectorAll(".portfolio-card"));
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const widthRatioByCount = { 1: 0.9, 2: 0.4, 3: 0.25, 4: 0.2 };
+  const primedImages = new WeakSet();
   let layoutFrame = 0;
 
   const getColumnCount = () => {
@@ -368,15 +371,70 @@ const portfolioImages = buildMixedOrder(
     return isLandscape ? 4 : 3;
   };
 
+  const markImageReady = (image) => {
+    if (!(image instanceof HTMLImageElement)) return;
+    const card = image.closest(".portfolio-card");
+    card?.classList.add("has-image");
+
+    if (card instanceof HTMLElement && card.dataset.pendingVisible === "true") {
+      card.classList.add("is-visible");
+      delete card.dataset.pendingVisible;
+    }
+  };
+
+  const primeImage = (image) => {
+    if (!(image instanceof HTMLImageElement)) return;
+    image.loading = "eager";
+
+    if (image.complete && image.naturalWidth > 0) {
+      markImageReady(image);
+      return;
+    }
+
+    if (primedImages.has(image)) return;
+    primedImages.add(image);
+    image.addEventListener("load", () => markImageReady(image), { once: true });
+    image.addEventListener("error", () => markImageReady(image), { once: true });
+    image.decode?.().then(() => markImageReady(image)).catch(() => undefined);
+  };
+
+  const revealCard = (card) => {
+    if (!(card instanceof HTMLElement)) return;
+    const image = card.querySelector("[data-portfolio-image]");
+    primeImage(image);
+
+    if (image instanceof HTMLImageElement && !(image.complete && image.naturalWidth > 0)) {
+      card.dataset.pendingVisible = "true";
+      return;
+    }
+
+    card.classList.add("is-visible");
+    delete card.dataset.pendingVisible;
+  };
+
+  const hideCard = (card) => {
+    if (!(card instanceof HTMLElement)) return;
+    card.classList.remove("is-visible");
+    delete card.dataset.pendingVisible;
+  };
+
   const revealCards = () => {
     const viewportBottom = window.innerHeight;
+    const preloadTop = -window.innerHeight * 0.65;
+    const preloadBottom = window.innerHeight * 2.6;
     const isScrollingUp = window.scrollY < lastScrollY;
     portfolioCards.forEach((card) => {
       const rect = card.getBoundingClientRect();
+      const image = card instanceof HTMLElement ? card.querySelector("[data-portfolio-image]") : null;
+
+      if (rect.top <= preloadBottom && rect.bottom >= preloadTop) {
+        primeImage(image);
+      }
+
       if (rect.top + rect.height / 2 <= viewportBottom) {
-        card.classList.add("is-visible");
+        revealCard(card);
       } else if (isScrollingUp) {
-        card.classList.remove("is-visible");
+        hideCard(card);
       }
     });
     lastScrollY = window.scrollY;
@@ -435,7 +493,12 @@ const portfolioImages = buildMixedOrder(
     window.addEventListener("load", queueLayout, { once: true });
 
     if (prefersReducedMotion) {
-      portfolioCards.forEach((card) => card.classList.add("is-visible"));
+      portfolioCards.forEach((card) => {
+        if (card instanceof HTMLElement) {
+          primeImage(card.querySelector("[data-portfolio-image]"));
+          card.classList.add("is-visible");
+        }
+      });
     }
   }
 </script>
@@ -479,8 +542,13 @@ const portfolioImages = buildMixedOrder(
     display: block;
     height: 100%;
     object-fit: contain;
-    transition: transform 260ms ease;
+    opacity: 0;
+    transition: opacity 260ms ease, transform 260ms ease;
     width: 100%;
+  }
+
+  .portfolio-card.has-image img {
+    opacity: 1;
   }
 
   .portfolio-card:hover {
