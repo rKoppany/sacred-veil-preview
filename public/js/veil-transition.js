@@ -332,7 +332,7 @@ const setupPortfolioGallery = () => {
     const shortSide = Math.min(width, height);
 
     if (shortSide < 600) return isLandscape ? 2 : 1;
-    if (width < 1024) return isLandscape ? 3 : 2;
+    if (width < 760) return isLandscape ? 3 : 2;
     return isLandscape ? 4 : 3;
   };
 
@@ -433,11 +433,187 @@ const prefillContactForm = (pageUrl = window.location.href) => {
   setSelectValue(document.querySelector("#packageInterest"), params.get("csomag"));
 };
 
+let layoutMotionBound = false;
+let layoutMotionNextId = 0;
+let layoutMotionLastRects = new Map();
+let layoutMotionFrame = 0;
+const layoutMotionActiveAnimations = new WeakMap();
+const layoutMotionIds = new WeakMap();
+const layoutMotionSelector = [
+  "header .site-header-inner > *",
+  "main section > .container > *",
+  "main .grid > *",
+  ".media-frame",
+  ".package-card",
+  ".package-promo",
+  ".package-notes > *",
+  ".button",
+  ".aszf-card",
+  "footer .container > *"
+].join(",");
+
+const getLayoutMotionId = (element) => {
+  if (!layoutMotionIds.has(element)) {
+    layoutMotionIds.set(element, `layout-motion-${layoutMotionNextId++}`);
+  }
+
+  return layoutMotionIds.get(element);
+};
+
+const getLayoutMotionElements = () => {
+  const seen = new Set();
+  return Array.from(document.querySelectorAll(layoutMotionSelector)).filter((element) => {
+    if (!(element instanceof HTMLElement) || seen.has(element)) return false;
+    if (
+      element.closest(
+        ".portfolio-wall, [data-lightbox-modal], .veil-canvas-transition, .veil-dom-transition, .veil-snapshot-fade, .page-reveal-mask"
+      )
+    ) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    const isVisible =
+      style.display !== "none" &&
+      style.visibility !== "hidden" &&
+      rect.width > 0 &&
+      rect.height > 0 &&
+      rect.bottom > -160 &&
+      rect.top < window.innerHeight + 160;
+
+    if (!isVisible) return false;
+    seen.add(element);
+    return true;
+  });
+};
+
+const captureLayoutMotionRects = () => {
+  const rects = new Map();
+  getLayoutMotionElements().forEach((element) => {
+    rects.set(getLayoutMotionId(element), element.getBoundingClientRect());
+  });
+  return rects;
+};
+
+const refreshLayoutMotionRects = () => {
+  if (reducedMotion) return;
+  window.requestAnimationFrame(() => {
+    layoutMotionLastRects = captureLayoutMotionRects();
+  });
+};
+
+const animateLayoutMotion = () => {
+  layoutMotionFrame = 0;
+
+  if (reducedMotion || isNavigating) {
+    refreshLayoutMotionRects();
+    return;
+  }
+
+  const elements = getLayoutMotionElements();
+  const visualStartRects = new Map();
+  const currentRects = new Map();
+  const animations = [];
+
+  elements.forEach((element) => {
+    const id = getLayoutMotionId(element);
+    const activeAnimation = layoutMotionActiveAnimations.get(element);
+
+    if (activeAnimation) {
+      visualStartRects.set(id, element.getBoundingClientRect());
+    }
+
+    activeAnimation?.cancel();
+    layoutMotionActiveAnimations.delete(element);
+  });
+
+  elements.forEach((element) => {
+    currentRects.set(getLayoutMotionId(element), element.getBoundingClientRect());
+  });
+
+  elements.forEach((element) => {
+    const id = getLayoutMotionId(element);
+    const first = visualStartRects.get(id) || layoutMotionLastRects.get(id);
+    const last = currentRects.get(id);
+    if (!first || !last) return;
+
+    const deltaX = first.left - last.left;
+    const deltaY = first.top - last.top;
+    const scaleX = first.width / Math.max(last.width, 1);
+    const scaleY = first.height / Math.max(last.height, 1);
+    const moved = Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1;
+    const resized = Math.abs(scaleX - 1) > 0.02 || Math.abs(scaleY - 1) > 0.02;
+
+    if (!moved && !resized) return;
+
+    const animation = element.animate(
+      [
+        {
+          transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+          transformOrigin: "top left"
+        },
+        {
+          transform: "translate3d(0, 0, 0) scale(1, 1)",
+          transformOrigin: "top left"
+        }
+      ],
+      {
+        duration: 1500,
+        easing: "cubic-bezier(0.42, 0, 0.24, 1)"
+      }
+    );
+
+    layoutMotionActiveAnimations.set(element, animation);
+    animations.push(
+      animation.finished
+        .then(() => {
+          if (layoutMotionActiveAnimations.get(element) === animation) {
+            layoutMotionActiveAnimations.delete(element);
+          }
+        })
+        .catch(() => null)
+    );
+  });
+
+  layoutMotionLastRects = currentRects;
+
+  if (animations.length === 0) {
+    refreshLayoutMotionRects();
+    return;
+  }
+
+  body.classList.add("is-layout-reflowing");
+  Promise.allSettled(animations).then(() => {
+    body.classList.remove("is-layout-reflowing");
+    refreshLayoutMotionRects();
+  });
+};
+
+const queueLayoutMotion = () => {
+  if (reducedMotion || isNavigating) return;
+  if (layoutMotionFrame) return;
+
+  layoutMotionFrame = window.requestAnimationFrame(animateLayoutMotion);
+};
+
+const setupLayoutMotion = () => {
+  if (reducedMotion) return;
+
+  refreshLayoutMotionRects();
+  if (layoutMotionBound) return;
+
+  layoutMotionBound = true;
+  window.addEventListener("resize", queueLayoutMotion, { passive: true });
+  window.addEventListener("orientationchange", queueLayoutMotion, { passive: true });
+};
+
 const setupPageInteractions = (pageUrl = window.location.href) => {
   setupNavigationToggle();
   prefillContactForm(pageUrl);
   setupContactForm();
   setupPortfolioGallery();
+  setupLayoutMotion();
 };
 
 const loadHtml2Canvas = () => {

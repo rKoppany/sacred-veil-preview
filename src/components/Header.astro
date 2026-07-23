@@ -4,17 +4,17 @@ import { navItems } from "../data/site";
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/30 bg-ivory/86 backdrop-blur-xl">
   <a class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-white focus:px-4 focus:py-2" href="#main">Ugrás a tartalomra</a>
-  <div class="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-5">
-    <a href="index.html" class="flex items-center gap-3 font-display text-3xl font-semibold text-ink" aria-label="Sacred Veil főoldal">
+  <div class="site-header-inner mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-5">
+    <a href="index.html" class="site-brand flex items-center gap-3 font-display text-3xl font-semibold text-ink" aria-label="Sacred Veil főoldal">
       <span class="brand-mark h-11 w-11">
         <img src="images/brand/sacred-veil-logo-transparent.png?v=20260722" alt="" loading="eager" />
       </span>
-      <span>Sacred Veil</span>
+      <span class="site-brand-name">Sacred Veil</span>
     </a>
-    <nav class="hidden items-center gap-8 text-sm font-semibold text-taupe lg:flex" aria-label="Fő navigáció">
+    <nav class="site-nav hidden items-center gap-8 text-sm font-semibold text-taupe lg:flex" aria-label="Fő navigáció">
       {navItems.map((item) => <a class="transition hover:text-rosegold" href={item.href}>{item.label}</a>)}
     </nav>
-    <a class="button button-primary hidden lg:inline-flex" href="kapcsolat.html">Árajánlatot kérek</a>
+    <a class="site-nav-cta button button-primary hidden lg:inline-flex" href="kapcsolat.html">Árajánlatot kérek</a>
     <button class="button button-secondary lg:hidden" type="button" data-menu-button aria-expanded="false" aria-controls="mobile-menu">
       Menü
     </button>

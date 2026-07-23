@@ -366,7 +366,7 @@ const portfolioImages = buildMixedOrder(
     const shortSide = Math.min(width, height);
 
     if (shortSide < 600) return isLandscape ? 2 : 1;
-    if (width < 1024) return isLandscape ? 3 : 2;
+    if (width < 760) return isLandscape ? 3 : 2;
     return isLandscape ? 4 : 3;
   };
 

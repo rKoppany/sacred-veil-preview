@@ -34,6 +34,10 @@
     overflow-x: hidden;
   }
 
+  body.is-layout-reflowing {
+    overflow-x: hidden;
+  }
+
   body.is-page-turning.has-visible-scrollbar {
     overflow-y: scroll;
   }
@@ -59,6 +63,10 @@
   Keep them outside Tailwind layers so purge/content scanning can never remove them.
 */
 body.is-page-turning {
+  overflow-x: hidden;
+}
+
+body.is-layout-reflowing {
   overflow-x: hidden;
 }
 
@@ -777,9 +785,11 @@ body.is-page-turning footer {
     font-weight: 700;
     gap: 0.65rem;
     justify-content: center;
+    max-width: 100%;
     min-height: 3rem;
     padding: 0.8rem 1.25rem;
     transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    white-space: nowrap;
   }
 
   .button-primary {
@@ -822,7 +832,83 @@ body.is-page-turning footer {
     object-position: 30% center;
   }
 
-  @media (max-width: 1023px) {
+  .site-header-inner {
+    gap: clamp(0.75rem, 2vw, 2rem);
+  }
+
+  .site-brand,
+  .site-nav,
+  .site-nav-cta {
+    flex-shrink: 0;
+  }
+
+  .site-brand-name,
+  .site-nav a,
+  .site-nav-cta {
+    white-space: nowrap;
+  }
+
+  .container.grid > .eyebrow:first-child,
+  .home-featured-heading > .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  @media (min-width: 760px) {
+    .home-featured-heading {
+      align-items: end;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .home-featured-heading .section-title {
+      font-size: clamp(2rem, 3.6vw, 4.2rem);
+      white-space: nowrap;
+    }
+  }
+
+  @media (min-width: 760px) and (max-width: 940px) {
+    .site-header-inner {
+      gap: 0.65rem;
+      padding-inline: clamp(0.6rem, 1.6vw, 1rem);
+    }
+
+    .site-brand {
+      align-items: center;
+      flex-basis: clamp(5.9rem, 16vw, 7.5rem);
+      flex-direction: column;
+      gap: 0.08rem;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .site-brand .brand-mark {
+      height: clamp(2rem, 5.2vw, 2.6rem);
+      width: clamp(2rem, 5.2vw, 2.6rem);
+    }
+
+    .site-brand-name {
+      font-size: clamp(1.12rem, 2.7vw, 1.45rem);
+      line-height: 0.95;
+    }
+
+    .site-nav {
+      flex: 1 1 auto;
+      gap: clamp(0.55rem, 1.7vw, 1rem);
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .site-nav a {
+      font-size: clamp(0.78rem, 1.55vw, 0.9rem);
+    }
+
+    .site-nav-cta {
+      font-size: clamp(0.78rem, 1.55vw, 0.88rem);
+      min-height: 2.75rem;
+      padding: 0.68rem clamp(0.82rem, 1.8vw, 1rem);
+    }
+  }
+
+  @media (max-width: 759px) {
     .home-hero-image {
       object-position: 24% center;
     }
