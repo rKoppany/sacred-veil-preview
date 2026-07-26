@@ -12,7 +12,7 @@ const packages = [
     images: "50 kép",
     prints: "10 db",
     description: "Könnyed, természetes jegyesfotózás egy szabadon választott helyszínen.",
-    includes: ["Országosan választható helyszín"]
+    includes: ["Országosan választható helyszín", "Budapesten és Pest megyében ingyenes kiszállás"]
   },
   {
     type: "Polgári",
@@ -25,7 +25,7 @@ const packages = [
     description: "Rövidebb, koncentrált fotózás a polgári szertartás és a családi pillanatok köré építve.",
     includes: [
       "Készülődés",
-      "Polgári szertartás",
+      "Szertartások",
       "Gratulációk",
       "Családi- és csoportképek",
       "Rövid kreatív, ha van rá lehetőség"
@@ -85,7 +85,7 @@ const packages = [
 
 const notes = [
   {
-    title: "Ajándék nyomatok",
+    title: "Ajándék nyomtatott fényképek",
     text: "Minden csomag tartalmaz nyomtatott fényképeket."
   },
   {
@@ -97,10 +97,12 @@ const notes = [
     text: "Egyedi igények külön egyeztetéssel."
   }
 ];
+
+const packageRows = [packages.slice(0, 2), packages.slice(2)];
 ---
 
 <Layout title="Csomagok | Sacred Veil" description="Sacred Veil jegyes, polgári és esküvői fotózási csomagok árakkal, átadott képszámmal és ajándék nyomatokkal.">
-  <PageHero eyebrow="Csomagok" title="Jegyes, polgári és esküvői fotózás átlátható csomagokban." lead="Találjuk meg a hozzátok illő és méltó Signature Collection-t: a rövid szertartás fotózásától a teljes napos esküvői történetmesélésig, hogy biztosan boldogan zárjátok a napot!" image="images/portfolio/portfolio-12.webp" class="packages-hero" imageClass="packages-hero-image" />
+  <PageHero eyebrow="Csomagok" title="Jegyes, polgári és esküvői fotózás átlátható csomagokban." lead="Találjuk meg a hozzátok illő és méltó Signature Collection-t: a rövid szertartás fotózásától a teljes napos esküvői történetmesélésig, hogy biztosan boldogan zárjátok a napot!" image="images/portfolio-full/IMG_0336-2.jpg" class="packages-hero" imageClass="packages-hero-image" />
 
   <section class="px-5 pb-10">
     <div class="container">
@@ -122,42 +124,46 @@ const notes = [
       </div>
 
       <div class="package-grid">
-        {packages.map((item) => (
-          <article class={`package-card ${item.featured ? "is-featured" : ""}`}>
-            {item.featured && <span class="package-ribbon">Legnépszerűbb</span>}
-            <div class="package-head">
-              <p class="eyebrow">{item.type}</p>
-              <p class="package-signature">Signature</p>
-              <h3>{item.name}</h3>
-              <p class="package-description">{item.description}</p>
-            </div>
+        {packageRows.map((row, rowIndex) => (
+          <div class={`package-row ${rowIndex === 0 ? "package-row-primary" : "package-row-wedding"}`}>
+            {row.map((item) => (
+              <article class={`package-card ${item.featured ? "is-featured" : ""}`}>
+                {item.featured && <span class="package-ribbon">Legnépszerűbb</span>}
+                <div class="package-head">
+                  <p class="eyebrow">{item.type}</p>
+                  <p class="package-signature">Signature</p>
+                  <h3>{item.name}</h3>
+                  <p class="package-description">{item.description}</p>
+                </div>
 
-            <div class="package-price">
-              <span>{item.price}</span>
-              <small>{item.duration} / {item.images}</small>
-            </div>
+                <div class="package-price">
+                  <span>{item.price}</span>
+                  <small>{item.duration} / {item.images}</small>
+                </div>
 
-            <ul class="package-facts" aria-label={`${item.name} csomag tartalma`}>
-              {item.includes.map((included) => (
-                <li>
-                  <span></span>
-                  {included}
-                </li>
-              ))}
-            </ul>
+                <ul class="package-facts" aria-label={`${item.name} csomag tartalma`}>
+                  {item.includes.map((included) => (
+                    <li>
+                      <span></span>
+                      {included}
+                    </li>
+                  ))}
+                </ul>
 
-            <div class="package-print">
-              <strong>Ajándék nyomat</strong>
-              <span>{item.prints}</span>
-            </div>
+                <div class="package-print">
+                  <strong>Ajándék nyomtatott fénykép</strong>
+                  <span>{item.prints}</span>
+                </div>
 
-            <a
-              class={`button ${item.featured ? "button-primary bg-ivory text-ink" : "button-secondary"} package-quote`}
-              href={`kapcsolat.html?tipus=${encodeURIComponent(item.serviceType)}&csomag=${encodeURIComponent(`${item.name} csomag`)}`}
-            >
-              Árajánlatot kérek erre
-            </a>
-          </article>
+                <a
+                  class={`button ${item.featured ? "button-primary bg-ivory text-ink" : "button-secondary"} package-quote`}
+                  href={`kapcsolat.html?tipus=${encodeURIComponent(item.serviceType)}&csomag=${encodeURIComponent(`${item.name} csomag`)}`}
+                >
+                  Árajánlatot kérek erre
+                </a>
+              </article>
+            ))}
+          </div>
         ))}
       </div>
     </div>

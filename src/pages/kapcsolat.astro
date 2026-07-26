@@ -8,33 +8,33 @@ import PageHero from "../components/PageHero.astro";
 
   <section class="section pt-0">
     <div class="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-      <form class="grid gap-5 rounded-lg bg-white p-6 shadow-soft md:p-8" data-contact-form data-contact-endpoint="https://sacred-veil-contact.roland-koppany.workers.dev" novalidate>
-        <div class="grid gap-2">
+      <form class="contact-form grid gap-5 rounded-lg bg-white p-6 shadow-soft md:p-8" data-contact-form data-contact-endpoint="https://sacred-veil-contact.roland-koppany.workers.dev" novalidate>
+        <div class="contact-field grid gap-2">
           <label class="font-semibold text-ink" for="name">Név *</label>
           <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="name" name="name" required autocomplete="name" />
         </div>
-        <div class="grid gap-5 md:grid-cols-2">
-          <div class="grid gap-2">
+        <div class="contact-field-row">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="email">E-mail cím *</label>
             <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="email" name="email" type="email" required autocomplete="email" />
           </div>
-          <div class="grid gap-2">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="phone">Telefonszám *</label>
             <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="phone" name="phone" required autocomplete="tel" />
           </div>
         </div>
-        <div class="grid gap-5 md:grid-cols-2">
-          <div class="grid gap-2">
+        <div class="contact-field-row">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="date">Tervezett dátum</label>
             <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="date" name="date" type="date" />
           </div>
-          <div class="grid gap-2">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="location">Helyszín vagy város</label>
             <input class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="location" name="location" />
           </div>
         </div>
-        <div class="grid gap-5 md:grid-cols-2">
-          <div class="grid gap-2">
+        <div class="contact-field-row">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="serviceType">Érdeklődés típusa *</label>
             <select class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="serviceType" name="serviceType" required>
               <option value="">Válasszatok</option>
@@ -44,7 +44,7 @@ import PageHero from "../components/PageHero.astro";
               <option>Több szolgáltatás</option>
             </select>
           </div>
-          <div class="grid gap-2">
+          <div class="contact-field grid gap-2">
             <label class="font-semibold text-ink" for="packageInterest">Csomag / opció</label>
             <select class="rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="packageInterest" name="packageInterest">
               <option value="">Még nem tudjuk</option>
@@ -56,7 +56,7 @@ import PageHero from "../components/PageHero.astro";
             </select>
           </div>
         </div>
-        <div class="grid gap-2">
+        <div class="contact-field grid gap-2">
           <label class="font-semibold text-ink" for="message">Rövid üzenet</label>
           <textarea class="min-h-36 rounded-md border border-taupe/18 bg-ivory px-4 py-3" id="message" name="message" placeholder="Írjátok meg elképzeléseitek és mire számítotok, valamint ami nektek fontos lenne az esküvőtök fotózásában."></textarea>
         </div>
@@ -73,8 +73,8 @@ import PageHero from "../components/PageHero.astro";
           <p class="eyebrow">Közvetlen kapcsolat</p>
           <h2 class="mt-4 font-display text-4xl leading-none text-ink">Válasz személyre szabottan.</h2>
           <div class="mt-6 grid gap-2 text-taupe/78">
-            <a href="mailto:hello@sacredveil.hu">hello@sacredveil.hu</a>
-            <a href="tel:+3612345678">+36 1 234 5678</a>
+            <a href="mailto:hello@sacredveil.eu">hello@sacredveil.eu</a>
+            <a href="tel:+36302567138">+36 30 256 7138</a>
             <span>Magyarország</span>
           </div>
         </div>

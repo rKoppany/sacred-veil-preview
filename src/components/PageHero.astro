@@ -16,7 +16,7 @@ const hasLead = Array.isArray(lead) ? lead.length > 0 : Boolean(lead);
 <section class={`section pt-32 page-hero ${className}`}>
   <div class="container grid items-center gap-x-10 gap-y-4 lg:grid-cols-[0.9fr_1.1fr]">
     <p class="eyebrow reveal lg:col-span-2">{eyebrow}</p>
-    <div class={`reveal ${!image ? "lg:col-span-2" : ""}`}>
+    <div class={`page-hero-copy reveal ${!image ? "lg:col-span-2" : ""}`}>
       {hasTitle && <h1 class="page-title">{title}</h1>}
       {hasLead && (
         Array.isArray(lead) ? (
@@ -35,7 +35,7 @@ const hasLead = Array.isArray(lead) ? lead.length > 0 : Boolean(lead);
       )}
     </div>
     {image && (
-      <div class={`media-frame aspect-[4/3] reveal ${imageClass}`}>
+      <div class={`page-hero-media media-frame aspect-[4/3] reveal ${imageClass}`}>
         <img src={image} alt="" loading="eager" />
       </div>
     )}

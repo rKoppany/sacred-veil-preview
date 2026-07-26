@@ -4,8 +4,8 @@ import Layout from "../components/Layout.astro";
 
 <Layout title="Rólunk | Sacred Veil" description="Ismerd meg a Sacred Veil esküvői fotózás szemléletét: elegáns, figyelmes és természetes történetmesélés.">
   <section class="section pt-32 page-hero">
-    <div class="container grid items-start gap-x-10 gap-y-4 lg:grid-cols-[1fr_0.72fr]">
-      <p class="eyebrow reveal lg:col-span-2">Rólunk</p>
+    <div class="container grid gap-y-4">
+      <p class="eyebrow reveal">Rólunk</p>
       <div class="grid gap-5 text-lg text-taupe/78 reveal">
         <p>Kedves Jegyespár!</p>
         <p>
@@ -27,21 +27,23 @@ import Layout from "../components/Layout.astro";
           Ezért az első beszélgetés nálunk nem formaság: szeretnénk megérteni, milyen világot építetek arra a napra, milyen tempóban érzitek otthon magatokat, és hol van az a finom határ, ahol a jelenlétünk segítség.
         </p>
       </div>
-      <div class="reveal lg:justify-self-end">
-        <img class="h-auto w-full max-w-md rounded-lg shadow-soft" src="images/profile.webp" alt="" loading="eager" />
-      </div>
     </div>
   </section>
 
   <section class="section pt-0">
     <div class="container grid gap-8">
-      <div class="rounded-lg bg-veil p-8">
-        <h2 class="font-display text-4xl text-ink">Amit a fotózás közben képviselek</h2>
-        <ul class="mt-6 grid gap-4 text-sm text-taupe/76">
-          <li>Finom instrukciók, amelyek nem veszik el a természetességet.</li>
-          <li>Átgondolt képi ritmus a részletektől a nagy jelenetekig.</li>
-          <li>Elegáns utómunka, amely nem írja felül az emléket.</li>
-        </ul>
+      <div class="about-principles-grid grid items-start gap-6">
+        <div class="about-profile-frame reveal">
+          <img class="h-auto w-full rounded-lg shadow-soft" src="images/profile.webp" alt="" loading="eager" />
+        </div>
+        <div class="about-principles-card rounded-lg bg-veil p-8">
+          <h2 class="font-display text-4xl text-ink">Amit a fotózás közben képviselek</h2>
+          <ul class="about-principles-list mt-6 grid gap-4 text-sm text-taupe/76">
+            <li>Finom instrukciók, amelyek nem veszik el a természetességet.</li>
+            <li>Átgondolt képi ritmus a részletektől a nagy jelenetekig.</li>
+            <li>Elegáns utómunka, amely nem írja felül az emléket.</li>
+          </ul>
+        </div>
       </div>
       <div class="grid gap-6 text-lg text-taupe/78">
         <p>

@@ -22,7 +22,11 @@ export const featuredImages = [
   portfolioImages[1],
   portfolioImages[9],
   portfolioImages[12],
-  portfolioImages[18],
+  {
+    src: "images/portfolio-full/_NZ95390.jpg",
+    alt: "Gyűrűhúzás meghitt pillanata a szertartáson",
+    category: "eskuvo"
+  },
   portfolioImages[24]
 ];
 
