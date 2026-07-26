@@ -102,7 +102,7 @@ const packageRows = [packages.slice(0, 2), packages.slice(2)];
 ---
 
 <Layout title="Csomagok | Sacred Veil" description="Sacred Veil jegyes, polgári és esküvői fotózási csomagok árakkal, átadott képszámmal és ajándék nyomatokkal.">
-  <PageHero eyebrow="Csomagok" title="Jegyes, polgári és esküvői fotózás átlátható csomagokban." lead="Találjuk meg a hozzátok illő és méltó Signature Collection-t: a rövid szertartás fotózásától a teljes napos esküvői történetmesélésig, hogy biztosan boldogan zárjátok a napot!" image="images/portfolio-full/IMG_0336-2.jpg" class="packages-hero" imageClass="packages-hero-image" />
+  <PageHero eyebrow="Csomagok" title="Jegyes, polgári és esküvői fotózás átlátható csomagokban." lead="Találjuk meg a hozzátok illő és méltó Signature Collection-t: a rövid szertartás fotózásától a teljes napos esküvői történetmesélésig, hogy biztosan boldogan zárjátok a napot!" image="images/portfolio-full/IMG_9901-2.jpg" class="packages-hero" imageClass="packages-hero-image" />
 
   <section class="px-5 pb-10">
     <div class="container">
@@ -111,7 +111,7 @@ const packageRows = [packages.slice(0, 2), packages.slice(2)];
         <div>
           <h2 class="font-display text-4xl leading-none text-ink">2026-os Last Minute kedvezmény</h2>
         </div>
-        <p>Minden 2026. augusztus 1-ig megkötött szerződésre, ahol az esküvő legkésőbb 2026. október 31-én van.</p>
+        <p>Minden 2026 szeptember 1-ig megkötött szerződésre, ahol az esküvő legkésőbb 2026. november 30-án van.</p>
       </div>
     </div>
   </section>
@@ -194,4 +194,42 @@ const packageRows = [packages.slice(0, 2), packages.slice(2)];
       </div>
     </div>
   </section>
+
+  <script is:inline>
+    (() => {
+      const hero = document.querySelector(".packages-hero");
+      if (!hero) return;
+
+      const copy = hero.querySelector(".page-hero-copy");
+      const title = hero.querySelector(".page-title");
+      const lead = copy?.lastElementChild;
+      if (!copy || !title || !lead) return;
+
+      const syncHeroImageHeight = () => {
+        if (window.matchMedia("(max-width: 759px)").matches) {
+          hero.style.removeProperty("--packages-hero-copy-height");
+          return;
+        }
+
+        const titleRect = title.getBoundingClientRect();
+        const leadRect = lead.getBoundingClientRect();
+        const measuredHeight = Math.max(0, leadRect.bottom - titleRect.top);
+        hero.style.setProperty("--packages-hero-copy-height", `${measuredHeight}px`);
+      };
+
+      syncHeroImageHeight();
+      window.addEventListener("resize", syncHeroImageHeight, { passive: true });
+      window.addEventListener("load", syncHeroImageHeight, { once: true });
+
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(syncHeroImageHeight).observe(copy);
+        new ResizeObserver(syncHeroImageHeight).observe(title);
+        new ResizeObserver(syncHeroImageHeight).observe(lead);
+      }
+
+      if (document.fonts) {
+        document.fonts.ready.then(syncHeroImageHeight);
+      }
+    })();
+  </script>
 </Layout>
