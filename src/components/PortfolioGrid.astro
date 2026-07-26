@@ -560,20 +560,31 @@ const portfolioImages = buildMixedOrder(
   }
 
   [data-lightbox-image] {
+    position: relative;
     will-change: opacity, transform;
+    z-index: 2;
   }
 
-  [data-lightbox-modal] .lightbox-control,
-  [data-lightbox-modal] .lightbox-arrows-position {
+  [data-lightbox-modal] .lightbox-control {
     opacity: 0;
     transform: translateY(10px);
     transition: opacity 500ms ease, transform 500ms cubic-bezier(0.16, 0.84, 0.22, 1);
   }
 
-  [data-lightbox-modal].is-open .lightbox-control,
-  [data-lightbox-modal].is-open .lightbox-arrows-position {
+  [data-lightbox-modal] .lightbox-arrows-position {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    transition: opacity 500ms ease, transform 500ms cubic-bezier(0.16, 0.84, 0.22, 1);
+  }
+
+  [data-lightbox-modal].is-open .lightbox-control {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  [data-lightbox-modal].is-open .lightbox-arrows-position {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 
   .lightbox-image-ghost {
@@ -595,6 +606,10 @@ const portfolioImages = buildMixedOrder(
       opacity: 1;
       transform: translate3d(var(--portfolio-x, 0), var(--portfolio-y, 0), 0);
       transition: none;
+    }
+
+    [data-lightbox-modal] .lightbox-arrows-position {
+      transform: translateX(-50%) translateY(0);
     }
   }
 </style>

@@ -1058,7 +1058,7 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
       }
       float laceMask = texture2D(u_laceTexture, laceUv).a;
       laceMask = smoothstep(.18, .86, laceMask);
-      vec2 outlineStep = vec2(.0007, .0007);
+      vec2 outlineStep = vec2(.0005, .0005);
       float outlineMask = 0.0;
       outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv + vec2(outlineStep.x, 0.0), 0.0, 1.0)).a);
       outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv - vec2(outlineStep.x, 0.0), 0.0, 1.0)).a);
@@ -1070,9 +1070,11 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
       vec3 whiteFabric = mix(paleFabric, vec3(1.0), u_white * .72);
       vec3 laceColor = mix(whiteFabric, vec3(1.0), laceMask * .88);
       color.rgb = mix(whiteFabric, laceColor, laceMask);
-      color.rgb = mix(color.rgb, vec3(.831, .686, .216), outlineMask * u_material * .86);
-      float verticalOpacity = mix(.6, .8, clamp(v_texcoord.y / .25, 0.0, 1.0));
-      verticalOpacity = mix(verticalOpacity, 1.0, clamp((v_texcoord.y - .25) / .25, 0.0, 1.0));
+      color.rgb = mix(color.rgb, vec3(.435, .408, .376), outlineMask * u_material * .86);
+      float verticalOpacity = mix(.5, .6, clamp(v_texcoord.y / .25, 0.0, 1.0));
+      verticalOpacity = mix(verticalOpacity, .7, clamp((v_texcoord.y - .25) / .25, 0.0, 1.0));
+      verticalOpacity = mix(verticalOpacity, .8, clamp((v_texcoord.y - .5) / .25, 0.0, 1.0));
+      verticalOpacity = mix(verticalOpacity, 1.0, clamp((v_texcoord.y - .75) / .15, 0.0, 1.0));
       color.a *= max(materialAlpha, outlineMask * u_material) * u_opacity * verticalOpacity;
       gl_FragColor = color;
     }
