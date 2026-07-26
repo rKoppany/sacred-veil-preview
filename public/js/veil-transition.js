@@ -1,5 +1,8 @@
 const body = document.body;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isAppleTouchDevice =
+  /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 let isNavigating = false;
 let html2CanvasPromise;
 let laceImagePromise;
@@ -138,6 +141,7 @@ const setupPortfolioGallery = () => {
   let isLightboxAnimating = false;
   let lastScrollY = window.scrollY;
   let layoutFrame = 0;
+  let portfolioLayoutViewportWidth = window.innerWidth;
 
   if (portfolioCards.length === 0) {
     return;
@@ -393,9 +397,24 @@ const setupPortfolioGallery = () => {
     window.requestAnimationFrame(revealCards);
   };
 
+  const handlePortfolioResize = () => {
+    const nextWidth = window.innerWidth;
+
+    if (isAppleTouchDevice && Math.abs(nextWidth - portfolioLayoutViewportWidth) < 2) {
+      return;
+    }
+
+    portfolioLayoutViewportWidth = nextWidth;
+    queueLayout();
+  };
+
+  const handlePortfolioOrientationChange = () => {
+    window.requestAnimationFrame(handlePortfolioResize);
+  };
+
   layoutMasonry();
-  window.addEventListener("resize", queueLayout);
-  window.addEventListener("orientationchange", queueLayout);
+  window.addEventListener("resize", handlePortfolioResize);
+  window.addEventListener("orientationchange", handlePortfolioOrientationChange);
   window.addEventListener("scroll", queueReveal, { passive: true });
   window.addEventListener("load", queueLayout, { once: true });
 
@@ -437,6 +456,7 @@ let layoutMotionBound = false;
 let layoutMotionNextId = 0;
 let layoutMotionLastRects = new Map();
 let layoutMotionFrame = 0;
+let layoutMotionViewportWidth = window.innerWidth;
 const layoutMotionActiveAnimations = new WeakMap();
 const layoutMotionIds = new WeakMap();
 const layoutMotionSelector = [
@@ -597,6 +617,21 @@ const queueLayoutMotion = () => {
   layoutMotionFrame = window.requestAnimationFrame(animateLayoutMotion);
 };
 
+const handleLayoutMotionResize = () => {
+  const nextWidth = window.innerWidth;
+
+  if (isAppleTouchDevice && Math.abs(nextWidth - layoutMotionViewportWidth) < 2) {
+    return;
+  }
+
+  layoutMotionViewportWidth = nextWidth;
+  queueLayoutMotion();
+};
+
+const handleLayoutMotionOrientationChange = () => {
+  window.requestAnimationFrame(handleLayoutMotionResize);
+};
+
 const setupLayoutMotion = () => {
   if (reducedMotion) return;
 
@@ -604,8 +639,8 @@ const setupLayoutMotion = () => {
   if (layoutMotionBound) return;
 
   layoutMotionBound = true;
-  window.addEventListener("resize", queueLayoutMotion, { passive: true });
-  window.addEventListener("orientationchange", queueLayoutMotion, { passive: true });
+  window.addEventListener("resize", handleLayoutMotionResize, { passive: true });
+  window.addEventListener("orientationchange", handleLayoutMotionOrientationChange, { passive: true });
 };
 
 const setupPageInteractions = (pageUrl = window.location.href) => {
@@ -646,7 +681,7 @@ const loadLaceImage = () => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = reject;
-    image.src = "lace-mask.png?v=5";
+    image.src = isAppleTouchDevice ? "lace-mask-apple.png?v=1" : "lace-mask.png?v=5";
   });
 
   return laceImagePromise;
@@ -712,7 +747,7 @@ const createLacePattern = (ctx, scale) => {
 
 const captureCurrentViewport = async () => {
   const html2canvas = await loadHtml2Canvas();
-  const scale = Math.min(window.devicePixelRatio || 1, 1.15);
+  const scale = isAppleTouchDevice ? 1 : Math.min(window.devicePixelRatio || 1, 1.15);
 
   return html2canvas(document.documentElement, {
     backgroundColor: null,
@@ -935,7 +970,7 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
   laceCanvas.width = laceImage.width;
   laceCanvas.height = laceImage.height;
   laceContext.drawImage(laceImage, 0, 0);
-  const laceAlpha = laceContext.getImageData(0, 0, laceCanvas.width, laceCanvas.height).data;
+  let laceAlpha = laceContext.getImageData(0, 0, laceCanvas.width, laceCanvas.height).data;
   const hemProfile = Array.from({ length: cols + 1 }, (_, col) => {
     const x01 = col / cols;
     const laceU = (x01 - coverOffsetX) / coverWidth;
@@ -973,6 +1008,11 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
       hemProfile[index] = ((previous[index - 1] * .2) + (previous[index] * .6) + (previous[index + 1] * .2));
     }
   }
+
+  laceAlpha = null;
+  laceCanvas.width = 1;
+  laceCanvas.height = 1;
+
   const colData = Array.from({ length: cols + 1 }, (_, col) => {
     const x01 = col / cols;
     const xNorm = x01 - .5;
@@ -1129,6 +1169,9 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, positions.byteLength, gl.DYNAMIC_DRAW);
+
   const render = (now) => {
     const elapsed = now - start;
     const t = Math.min(1, elapsed / totalDuration);
@@ -1231,7 +1274,7 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.uniform1f(opacityLocation, opacity);
