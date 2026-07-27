@@ -70,6 +70,11 @@ body.is-layout-reflowing {
   overflow-x: hidden;
 }
 
+a[href],
+button {
+  touch-action: manipulation;
+}
+
 body.is-page-turning.has-visible-scrollbar {
   overflow-y: scroll;
 }

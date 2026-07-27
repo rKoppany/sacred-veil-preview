@@ -7,6 +7,41 @@ let isNavigating = false;
 let html2CanvasPromise;
 let laceImagePromise;
 let lockedScrollY = 0;
+let appleTouchNavigation = null;
+let suppressNextClick = false;
+
+const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
+  let settled = false;
+  const timeoutId = window.setTimeout(() => {
+    if (settled) {
+      return;
+    }
+
+    settled = true;
+    reject(new Error(message));
+  }, timeoutMs);
+
+  Promise.resolve(promise).then(
+    (value) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve(value);
+    },
+    (error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.clearTimeout(timeoutId);
+      reject(error);
+    }
+  );
+});
 
 const setupNavigationToggle = () => {
   const navToggle = document.querySelector("[data-menu-button]");
@@ -660,13 +695,31 @@ const loadHtml2Canvas = () => {
     return html2CanvasPromise;
   }
 
-  html2CanvasPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+  const script = document.createElement("script");
+  const loadingPromise = new Promise((resolve, reject) => {
+    script.src = new URL("js/html2canvas.min.js?v=1", document.baseURI).href;
     script.async = true;
-    script.onload = () => resolve(window.html2canvas);
+    script.dataset.veilDependency = "html2canvas";
+    script.onload = () => {
+      if (typeof window.html2canvas === "function") {
+        resolve(window.html2canvas);
+        return;
+      }
+
+      reject(new Error("html2canvas loaded without exposing its API"));
+    };
     script.onerror = reject;
     document.head.appendChild(script);
+  });
+
+  html2CanvasPromise = withTimeout(
+    loadingPromise,
+    isAppleTouchDevice ? 3500 : 7000,
+    "html2canvas loading timed out"
+  ).catch((error) => {
+    script.remove();
+    html2CanvasPromise = undefined;
+    throw error;
   });
 
   return html2CanvasPromise;
@@ -685,6 +738,20 @@ const loadLaceImage = () => {
   });
 
   return laceImagePromise;
+};
+
+const scheduleTransitionWarmup = () => {
+  const warmAssets = () => {
+    loadHtml2Canvas().catch(() => {});
+    loadLaceImage().catch(() => {});
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(warmAssets, { timeout: 1200 });
+    return;
+  }
+
+  window.setTimeout(warmAssets, 150);
 };
 
 const replacePageContent = (nextDocument, pageUrl = window.location.href) => {
@@ -749,7 +816,7 @@ const captureCurrentViewport = async () => {
   const html2canvas = await loadHtml2Canvas();
   const scale = isAppleTouchDevice ? 1 : Math.min(window.devicePixelRatio || 1, 1.15);
 
-  return html2canvas(document.documentElement, {
+  const capturePromise = html2canvas(document.documentElement, {
     backgroundColor: null,
     height: window.innerHeight,
     logging: false,
@@ -763,6 +830,12 @@ const captureCurrentViewport = async () => {
     x: window.scrollX,
     y: window.scrollY
   });
+
+  return withTimeout(
+    capturePromise,
+    isAppleTouchDevice ? 5000 : 9000,
+    "viewport capture timed out"
+  );
 };
 
 const createCanvasOverlay = (snapshot) => {
@@ -868,11 +941,19 @@ const animateDomFallback = (sheet, revealMask) => new Promise((resolve) => {
     return;
   }
 
+  let settled = false;
+  let safetyTimeout;
   const finish = (event) => {
-    if (event.animationName !== "domVeilLift") {
+    if (event && event.animationName !== "domVeilLift") {
       return;
     }
 
+    if (settled) {
+      return;
+    }
+
+    settled = true;
+    window.clearTimeout(safetyTimeout);
     surface.removeEventListener("animationend", finish);
     resolve();
   };
@@ -897,37 +978,61 @@ const animateDomFallback = (sheet, revealMask) => new Promise((resolve) => {
   }
 
   surface.addEventListener("animationend", finish);
+  safetyTimeout = window.setTimeout(() => finish(), 3100);
   window.setTimeout(() => sheet.classList.add("is-turning"), 500);
 });
 
-const animateVeilCanvas = (canvas, snapshot, revealMask) => new Promise((resolve) => {
-  const gl = canvas.getContext("webgl", {
-    alpha: true,
-    antialias: true,
-    depth: false,
-    powerPreference: "low-power",
-    preserveDrawingBuffer: false
-  });
+const createCanvas2DFallback = (canvas) => {
+  const fallback = document.createElement("canvas");
+  fallback.className = canvas.className;
+  fallback.width = canvas.width;
+  fallback.height = canvas.height;
+  fallback.style.cssText = canvas.style.cssText;
+  fallback.dataset.scale = canvas.dataset.scale;
+  canvas.insertAdjacentElement("afterend", fallback);
+  canvas.style.visibility = "hidden";
+  return fallback;
+};
 
-  if (gl) {
-    animateVeilWebGL(canvas, snapshot, gl, revealMask).then(resolve).catch(() => {
-      animateVeilCanvas2D(canvas, snapshot, revealMask).then(resolve);
-    });
-    return;
-  }
-
-  animateVeilCanvas2D(canvas, snapshot, revealMask).then(resolve);
-});
-
-const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise(async (resolve, reject) => {
-  let laceImage;
+const animateVeilCanvas = async (canvas, snapshot, revealMask) => {
+  let gl = null;
 
   try {
-    laceImage = await loadLaceImage();
+    gl = canvas.getContext("webgl", {
+      alpha: true,
+      antialias: !isAppleTouchDevice,
+      depth: false,
+      failIfMajorPerformanceCaveat: false,
+      powerPreference: "low-power",
+      preserveDrawingBuffer: false,
+      premultipliedAlpha: true
+    });
   } catch (error) {
-    reject(error);
+    gl = null;
+  }
+
+  if (!gl) {
+    await animateVeilCanvas2D(canvas, snapshot, revealMask);
     return;
   }
+
+  try {
+    await animateVeilWebGL(canvas, snapshot, gl, revealMask);
+  } catch (error) {
+    const fallback = createCanvas2DFallback(canvas);
+
+    try {
+      await animateVeilCanvas2D(fallback, snapshot, revealMask);
+    } finally {
+      fallback.remove();
+    }
+  }
+};
+
+const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
+  const laceImage = await loadLaceImage();
+
+  return new Promise((resolve, reject) => {
 
   const width = canvas.width;
   const height = canvas.height;
@@ -1172,6 +1277,16 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, positions.byteLength, gl.DYNAMIC_DRAW);
 
+  const handleContextLoss = (event) => {
+    event.preventDefault();
+    reject(new Error("WebGL context lost"));
+  };
+  const finishWebGL = () => {
+    canvas.removeEventListener("webglcontextlost", handleContextLoss);
+    resolve();
+  };
+  canvas.addEventListener("webglcontextlost", handleContextLoss, { once: true });
+
   const render = (now) => {
     const elapsed = now - start;
     const t = Math.min(1, elapsed / totalDuration);
@@ -1283,15 +1398,25 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => new Promise
     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
 
     if (t < 1) {
-      requestAnimationFrame(render);
+      requestAnimationFrame(safeRender);
       return;
     }
 
-    resolve();
+    finishWebGL();
   };
 
-  requestAnimationFrame(render);
-});
+  const safeRender = (now) => {
+    try {
+      render(now);
+    } catch (error) {
+      canvas.removeEventListener("webglcontextlost", handleContextLoss);
+      reject(error);
+    }
+  };
+
+    requestAnimationFrame(safeRender);
+  });
+};
 
 const animateVeilCanvas2D = (canvas, snapshot, revealMask) => new Promise((resolve) => {
   const ctx = canvas.getContext("2d", { alpha: true });
@@ -1442,10 +1567,18 @@ const navigateWithPageTurn = async (url) => {
     window.history.pushState({}, "", url.href);
     setupPageInteractions(url.href);
 
-    if (snapshot) {
-      await animateVeilCanvas(transitionLayer, snapshot, revealMask);
-    } else {
-      await animateDomFallback(transitionLayer, revealMask);
+    try {
+      if (snapshot) {
+        await withTimeout(
+          animateVeilCanvas(transitionLayer, snapshot, revealMask),
+          7000,
+          "veil animation timed out"
+        );
+      } else {
+        await animateDomFallback(transitionLayer, revealMask);
+      }
+    } catch (error) {
+      // The new page is already in place. A failed animation must never block navigation.
     }
 
     revealMask.remove();
@@ -1455,6 +1588,9 @@ const navigateWithPageTurn = async (url) => {
   } catch (error) {
     document.querySelector(".page-reveal-mask")?.remove();
     document.querySelector(".veil-snapshot-fade")?.remove();
+    document.querySelector(".veil-canvas-transition")?.remove();
+    document.querySelector(".veil-dom-transition")?.remove();
+    finishNavigation();
     window.location.href = url.href;
   }
 };
@@ -1462,6 +1598,7 @@ const navigateWithPageTurn = async (url) => {
 window.addEventListener("pageshow", () => {
   finishNavigation();
   setupPageInteractions();
+  scheduleTransitionWarmup();
   body.classList.add("initial-enter", "page-ready");
   window.setTimeout(() => body.classList.remove("initial-enter"), 700);
 });
@@ -1474,15 +1611,13 @@ window.addEventListener("popstate", async () => {
   }
 });
 
-document.addEventListener("click", (event) => {
-  const link = event.target.closest("a[href]");
-
-  if (!link || event.defaultPrevented || isNavigating) {
-    return;
-  }
-
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === "_blank") {
-    return;
+const getInternalNavigationUrl = (link) => {
+  if (
+    !(link instanceof HTMLAnchorElement) ||
+    link.target === "_blank" ||
+    link.hasAttribute("download")
+  ) {
+    return null;
   }
 
   const url = new URL(link.getAttribute("href"), window.location.href);
@@ -1490,9 +1625,116 @@ document.addEventListener("click", (event) => {
   const isInternalPage = url.origin === window.location.origin || window.location.protocol === "file:";
 
   if (!isInternalPage || isSamePageHash || url.href === window.location.href) {
+    return null;
+  }
+
+  return url;
+};
+
+document.addEventListener("touchstart", (event) => {
+  if (!isAppleTouchDevice || event.touches.length !== 1) {
+    return;
+  }
+
+  const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+  const link = target?.closest("a[href]");
+  const url = link ? getInternalNavigationUrl(link) : null;
+  const touch = event.touches[0];
+
+  appleTouchNavigation = url ? {
+    identifier: touch.identifier,
+    startX: touch.clientX,
+    startY: touch.clientY,
+    moved: false,
+    url
+  } : null;
+}, { capture: true, passive: true });
+
+document.addEventListener("touchmove", (event) => {
+  const navigation = appleTouchNavigation;
+
+  if (!navigation) {
+    return;
+  }
+
+  const touch = Array.from(event.touches).find((item) => item.identifier === navigation.identifier);
+
+  if (
+    !touch ||
+    Math.hypot(touch.clientX - navigation.startX, touch.clientY - navigation.startY) > 12
+  ) {
+    navigation.moved = true;
+  }
+}, { capture: true, passive: true });
+
+document.addEventListener("touchend", (event) => {
+  const touch = appleTouchNavigation;
+  appleTouchNavigation = null;
+  const changedTouch = touch
+    ? Array.from(event.changedTouches).find((item) => item.identifier === touch.identifier)
+    : null;
+
+  if (
+    !touch ||
+    !changedTouch ||
+    touch.moved ||
+    Math.hypot(changedTouch.clientX - touch.startX, changedTouch.clientY - touch.startY) > 12
+  ) {
     return;
   }
 
   event.preventDefault();
-  navigateWithPageTurn(url);
+  suppressNextClick = true;
+  window.setTimeout(() => {
+    suppressNextClick = false;
+  }, 700);
+
+  if (!isNavigating) {
+    void navigateWithPageTurn(touch.url);
+  }
+}, { capture: true, passive: false });
+
+document.addEventListener("touchcancel", () => {
+  appleTouchNavigation = null;
+}, { capture: true, passive: true });
+
+document.addEventListener("click", (event) => {
+  if (suppressNextClick) {
+    event.preventDefault();
+    suppressNextClick = false;
+    return;
+  }
+
+  const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+  const link = target?.closest("a[href]");
+
+  if (!link || event.defaultPrevented) {
+    return;
+  }
+
+  if (
+    event.button > 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    link.target === "_blank" ||
+    link.hasAttribute("download")
+  ) {
+    return;
+  }
+
+  const url = getInternalNavigationUrl(link);
+
+  if (!url) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (isNavigating) {
+    return;
+  }
+
+  void navigateWithPageTurn(url);
 });
