@@ -1,0 +1,47 @@
+[
+  {
+    "profile": "iPhone 11",
+    "navigationMs": 840.0855999999999,
+    "finalUrl": "http://127.0.0.1:4382/portfolio.html",
+    "portfolio": {
+      "cardCount": 66,
+      "columns": "1",
+      "loadedVisible": 1,
+      "sourcedVisible": 1,
+      "visibleCount": 1
+    },
+    "initialLayoutAnimations": 3,
+    "rotationLayoutAnimations": 3,
+    "failures": []
+  },
+  {
+    "profile": "iPhone 14",
+    "navigationMs": 952.8562999999995,
+    "finalUrl": "http://127.0.0.1:4382/portfolio.html",
+    "portfolio": {
+      "cardCount": 66,
+      "columns": "1",
+      "loadedVisible": 1,
+      "sourcedVisible": 1,
+      "visibleCount": 1
+    },
+    "initialLayoutAnimations": 3,
+    "rotationLayoutAnimations": 3,
+    "failures": []
+  },
+  {
+    "profile": "iPad (gen 6)",
+    "navigationMs": 587.1270999999979,
+    "finalUrl": "http://127.0.0.1:4382/portfolio.html",
+    "portfolio": {
+      "cardCount": 66,
+      "columns": "3",
+      "loadedVisible": 8,
+      "sourcedVisible": 8,
+      "visibleCount": 8
+    },
+    "initialLayoutAnimations": 3,
+    "rotationLayoutAnimations": 3,
+    "failures": []
+  }
+]

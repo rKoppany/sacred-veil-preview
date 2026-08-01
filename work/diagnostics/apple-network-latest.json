@@ -1,0 +1,340 @@
+[
+  {
+    "profile": "iPhone 11",
+    "navigationMs": 144,
+    "state": {
+      "bound": "true",
+      "cards": 66,
+      "columns": "1",
+      "enhanced": true,
+      "sourced": 5,
+      "loaded": 3,
+      "visible": 1,
+      "visibleLoaded": 1
+    },
+    "requestCounts": {
+      "html": 2,
+      "thumbnails": 3,
+      "fullImages": 0,
+      "appleMask": 1,
+      "html2canvas": 1
+    },
+    "criticalRequests": [
+      {
+        "path": "/index.html",
+        "resourceType": "document",
+        "startedMs": 21,
+        "status": 200,
+        "responseMs": 29
+      },
+      {
+        "path": "/js/html2canvas.min.js",
+        "resourceType": "script",
+        "startedMs": 40,
+        "status": 200,
+        "responseMs": 227
+      },
+      {
+        "path": "/lace-mask-apple-packed.png",
+        "resourceType": "image",
+        "startedMs": 990,
+        "status": 200,
+        "responseMs": 1178
+      },
+      {
+        "path": "/portfolio.html",
+        "resourceType": "fetch",
+        "startedMs": 1648,
+        "status": 200,
+        "responseMs": 1653
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ93773.webp",
+        "resourceType": "image",
+        "startedMs": 1660,
+        "status": 200,
+        "responseMs": 1812
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95528.webp",
+        "resourceType": "image",
+        "startedMs": 1660,
+        "status": 200,
+        "responseMs": 1810
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9747.webp",
+        "resourceType": "image",
+        "startedMs": 2210,
+        "status": 200,
+        "responseMs": 2265
+      }
+    ],
+    "failures": []
+  },
+  {
+    "profile": "iPhone 14",
+    "navigationMs": 522,
+    "state": {
+      "bound": "true",
+      "cards": 66,
+      "columns": "1",
+      "enhanced": true,
+      "sourced": 4,
+      "loaded": 2,
+      "visible": 1,
+      "visibleLoaded": 1
+    },
+    "requestCounts": {
+      "html": 2,
+      "thumbnails": 2,
+      "fullImages": 0,
+      "appleMask": 1,
+      "html2canvas": 1
+    },
+    "criticalRequests": [
+      {
+        "path": "/index.html",
+        "resourceType": "document",
+        "startedMs": 10,
+        "status": 200,
+        "responseMs": 16
+      },
+      {
+        "path": "/js/html2canvas.min.js",
+        "resourceType": "script",
+        "startedMs": 25,
+        "status": 200,
+        "responseMs": 218
+      },
+      {
+        "path": "/lace-mask-apple-packed.png",
+        "resourceType": "image",
+        "startedMs": 951,
+        "status": 200,
+        "responseMs": 1153
+      },
+      {
+        "path": "/portfolio.html",
+        "resourceType": "fetch",
+        "startedMs": 1975,
+        "status": 200,
+        "responseMs": 1981
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ93773.webp",
+        "resourceType": "image",
+        "startedMs": 1987,
+        "status": 200,
+        "responseMs": 2169
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95528.webp",
+        "resourceType": "image",
+        "startedMs": 1987,
+        "status": 200,
+        "responseMs": 2168
+      }
+    ],
+    "failures": []
+  },
+  {
+    "profile": "iPad (gen 6)",
+    "navigationMs": 562,
+    "state": {
+      "bound": "true",
+      "cards": 66,
+      "columns": "3",
+      "enhanced": true,
+      "sourced": 25,
+      "loaded": 21,
+      "visible": 8,
+      "visibleLoaded": 8
+    },
+    "requestCounts": {
+      "html": 2,
+      "thumbnails": 21,
+      "fullImages": 0,
+      "appleMask": 1,
+      "html2canvas": 1
+    },
+    "criticalRequests": [
+      {
+        "path": "/index.html",
+        "resourceType": "document",
+        "startedMs": 14,
+        "status": 200,
+        "responseMs": 20
+      },
+      {
+        "path": "/js/html2canvas.min.js",
+        "resourceType": "script",
+        "startedMs": 28,
+        "status": 200,
+        "responseMs": 218
+      },
+      {
+        "path": "/lace-mask-apple-packed.png",
+        "resourceType": "image",
+        "startedMs": 995,
+        "status": 200,
+        "responseMs": 1212
+      },
+      {
+        "path": "/portfolio.html",
+        "resourceType": "fetch",
+        "startedMs": 1707,
+        "status": 200,
+        "responseMs": 1713
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ93773.webp",
+        "resourceType": "image",
+        "startedMs": 1718,
+        "status": 200,
+        "responseMs": 1876
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95528.webp",
+        "resourceType": "image",
+        "startedMs": 1718,
+        "status": 200,
+        "responseMs": 1875
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9747.webp",
+        "resourceType": "image",
+        "startedMs": 1890,
+        "status": 200,
+        "responseMs": 2387
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95452.webp",
+        "resourceType": "image",
+        "startedMs": 1891,
+        "status": 200,
+        "responseMs": 2388
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9901-2.webp",
+        "resourceType": "image",
+        "startedMs": 1891,
+        "status": 200,
+        "responseMs": 2389
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ94144-2.webp",
+        "resourceType": "image",
+        "startedMs": 1891,
+        "status": 200,
+        "responseMs": 2390
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_0315.webp",
+        "resourceType": "image",
+        "startedMs": 2471,
+        "status": 200,
+        "responseMs": 2634
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ98374.webp",
+        "resourceType": "image",
+        "startedMs": 2471,
+        "status": 200,
+        "responseMs": 2633
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ98375.webp",
+        "resourceType": "image",
+        "startedMs": 2471,
+        "status": 200,
+        "responseMs": 2633
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1011.webp",
+        "resourceType": "image",
+        "startedMs": 2471,
+        "status": 200,
+        "responseMs": 2633
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1147.webp",
+        "resourceType": "image",
+        "startedMs": 2675,
+        "status": 200,
+        "responseMs": 2805
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95981.webp",
+        "resourceType": "image",
+        "startedMs": 2675,
+        "status": 200,
+        "responseMs": 2804
+      },
+      {
+        "path": "/images/portfolio-thumbs/Autos2.webp",
+        "resourceType": "image",
+        "startedMs": 2675,
+        "status": 200,
+        "responseMs": 2807
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9796.webp",
+        "resourceType": "image",
+        "startedMs": 2675,
+        "status": 200,
+        "responseMs": 2806
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_2290.webp",
+        "resourceType": "image",
+        "startedMs": 2853,
+        "status": 200,
+        "responseMs": 3002
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95936.webp",
+        "resourceType": "image",
+        "startedMs": 2853,
+        "status": 200,
+        "responseMs": 3001
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_3189.webp",
+        "resourceType": "image",
+        "startedMs": 2853,
+        "status": 200,
+        "responseMs": 3005
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_3309-2.webp",
+        "resourceType": "image",
+        "startedMs": 2855,
+        "status": 200,
+        "responseMs": 3001
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1052-2.webp",
+        "resourceType": "image",
+        "startedMs": 3064,
+        "status": 200,
+        "responseMs": 3246
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9708.webp",
+        "resourceType": "image",
+        "startedMs": 3064,
+        "status": 200,
+        "responseMs": 3247
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1637.webp",
+        "resourceType": "image",
+        "startedMs": 3064,
+        "status": 200,
+        "responseMs": 3252
+      }
+    ],
+    "failures": []
+  }
+]

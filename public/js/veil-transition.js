@@ -3,12 +3,25 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matc
 const isAppleTouchDevice =
   /iPhone|iPad|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+body.classList.toggle("is-iphone", isIPhone);
+body.classList.toggle("is-apple-touch", isAppleTouchDevice);
 let isNavigating = false;
 let html2CanvasPromise;
 let laceImagePromise;
+let packedLaceImagePromise;
+let packedLaceAnalysisPromise;
 let lockedScrollY = 0;
-let appleTouchNavigation = null;
-let suppressNextClick = false;
+const documentCache = new Map();
+let touchNavigationCandidate = null;
+let preparedViewportSnapshot = null;
+let preparedViewportSignature = "";
+let preparedViewportCapturePromise = null;
+let preparedViewportCaptureSignature = "";
+let preparedViewportCaptureClaimed = false;
+let preparedViewportTimer = 0;
+let preparedViewportVersion = 0;
+let lastAppleInteractionAt = performance.now();
 
 const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
   let settled = false;
@@ -159,7 +172,7 @@ const setupContactForm = () => {
 const setupPortfolioGallery = () => {
   const masonryWall = document.querySelector("[data-portfolio-masonry]");
 
-  if (!(masonryWall instanceof HTMLElement) || masonryWall.dataset.portfolioBound === "true" || masonryWall.classList.contains("is-enhanced")) {
+  if (!(masonryWall instanceof HTMLElement) || masonryWall.dataset.portfolioBound === "true") {
     return;
   }
 
@@ -176,7 +189,9 @@ const setupPortfolioGallery = () => {
   let isLightboxAnimating = false;
   let lastScrollY = window.scrollY;
   let layoutFrame = 0;
+  let revealFrame = 0;
   let portfolioLayoutViewportWidth = window.innerWidth;
+  const revealAnimationTimers = new WeakMap();
 
   if (portfolioCards.length === 0) {
     return;
@@ -378,12 +393,28 @@ const setupPortfolioGallery = () => {
   const revealCards = () => {
     const viewportBottom = window.innerHeight;
     const isScrollingUp = window.scrollY < lastScrollY;
+    const wallTop = masonryWall.getBoundingClientRect().top;
     portfolioCards.forEach((card) => {
-      const rect = card.getBoundingClientRect();
-      if (rect.top + rect.height / 2 <= viewportBottom) {
-        card.classList.add("is-visible");
+      if (!(card instanceof HTMLElement)) return;
+      const cardTop = wallTop + (Number.parseFloat(card.style.getPropertyValue("--portfolio-y")) || 0);
+      const cardHeight = Number.parseFloat(card.style.height) || 0;
+      if (cardTop + cardHeight / 2 <= viewportBottom) {
+        if (!card.classList.contains("is-visible")) {
+          card.classList.add("is-visible", "is-reveal-animating");
+          window.clearTimeout(revealAnimationTimers.get(card));
+          revealAnimationTimers.set(card, window.setTimeout(() => {
+            card.classList.remove("is-reveal-animating");
+          }, 1550));
+        }
       } else if (isScrollingUp) {
-        card.classList.remove("is-visible");
+        if (card.classList.contains("is-visible")) {
+          card.classList.add("is-reveal-animating");
+          card.classList.remove("is-visible");
+          window.clearTimeout(revealAnimationTimers.get(card));
+          revealAnimationTimers.set(card, window.setTimeout(() => {
+            card.classList.remove("is-reveal-animating");
+          }, 1550));
+        }
       }
     });
     lastScrollY = window.scrollY;
@@ -400,6 +431,11 @@ const setupPortfolioGallery = () => {
     const totalWidth = itemWidth * columns + gap * (columns - 1);
     const startX = Math.max((availableWidth - totalWidth) / 2, 0);
     const columnHeights = Array.from({ length: columns }, () => 0);
+
+    const shouldApplyInstantLayout = isAppleTouchDevice && masonryWall.classList.contains("is-enhanced");
+    if (shouldApplyInstantLayout) {
+      masonryWall.classList.add("is-instant-layout");
+    }
 
     masonryWall.classList.add("is-enhanced");
     masonryWall.dataset.columns = String(columns);
@@ -421,6 +457,14 @@ const setupPortfolioGallery = () => {
 
     masonryWall.style.height = `${Math.max(...columnHeights) - gap}px`;
     revealCards();
+
+    if (shouldApplyInstantLayout) {
+      // Keep transitions disabled until WebKit has committed the new geometry.
+      // A single frame is too early on iOS during orientation changes.
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => masonryWall.classList.remove("is-instant-layout"));
+      });
+    }
   };
 
   const queueLayout = () => {
@@ -429,7 +473,11 @@ const setupPortfolioGallery = () => {
   };
 
   const queueReveal = () => {
-    window.requestAnimationFrame(revealCards);
+    if (revealFrame) return;
+    revealFrame = window.requestAnimationFrame(() => {
+      revealFrame = 0;
+      revealCards();
+    });
   };
 
   const handlePortfolioResize = () => {
@@ -493,6 +541,7 @@ let layoutMotionLastRects = new Map();
 let layoutMotionFrame = 0;
 let layoutMotionViewportWidth = window.innerWidth;
 const layoutMotionActiveAnimations = new WeakMap();
+const layoutMotionActiveElements = new Set();
 const layoutMotionIds = new WeakMap();
 const layoutMotionSelector = [
   "header .site-header-inner > *",
@@ -552,7 +601,7 @@ const captureLayoutMotionRects = () => {
 };
 
 const refreshLayoutMotionRects = () => {
-  if (reducedMotion) return;
+  if (reducedMotion || isIPhone) return;
   window.requestAnimationFrame(() => {
     layoutMotionLastRects = captureLayoutMotionRects();
   });
@@ -561,7 +610,7 @@ const refreshLayoutMotionRects = () => {
 const animateLayoutMotion = () => {
   layoutMotionFrame = 0;
 
-  if (reducedMotion || isNavigating) {
+  if (reducedMotion || isIPhone || isNavigating) {
     refreshLayoutMotionRects();
     return;
   }
@@ -620,11 +669,13 @@ const animateLayoutMotion = () => {
     );
 
     layoutMotionActiveAnimations.set(element, animation);
+    layoutMotionActiveElements.add(element);
     animations.push(
       animation.finished
         .then(() => {
           if (layoutMotionActiveAnimations.get(element) === animation) {
             layoutMotionActiveAnimations.delete(element);
+            layoutMotionActiveElements.delete(element);
           }
         })
         .catch(() => null)
@@ -646,13 +697,14 @@ const animateLayoutMotion = () => {
 };
 
 const queueLayoutMotion = () => {
-  if (reducedMotion || isNavigating) return;
+  if (reducedMotion || isIPhone || isNavigating) return;
   if (layoutMotionFrame) return;
 
   layoutMotionFrame = window.requestAnimationFrame(animateLayoutMotion);
 };
 
 const handleLayoutMotionResize = () => {
+  if (isIPhone) return;
   const nextWidth = window.innerWidth;
 
   if (isAppleTouchDevice && Math.abs(nextWidth - layoutMotionViewportWidth) < 2) {
@@ -664,11 +716,34 @@ const handleLayoutMotionResize = () => {
 };
 
 const handleLayoutMotionOrientationChange = () => {
+  if (isIPhone) return;
   window.requestAnimationFrame(handleLayoutMotionResize);
 };
 
+const disableLayoutMotion = () => {
+  if (layoutMotionFrame) {
+    window.cancelAnimationFrame(layoutMotionFrame);
+    layoutMotionFrame = 0;
+  }
+  layoutMotionActiveElements.forEach((element) => {
+    layoutMotionActiveAnimations.get(element)?.cancel();
+    layoutMotionActiveAnimations.delete(element);
+  });
+  layoutMotionActiveElements.clear();
+  layoutMotionLastRects = new Map();
+  body.classList.remove("is-layout-reflowing");
+  if (layoutMotionBound) {
+    window.removeEventListener("resize", handleLayoutMotionResize);
+    window.removeEventListener("orientationchange", handleLayoutMotionOrientationChange);
+    layoutMotionBound = false;
+  }
+};
+
 const setupLayoutMotion = () => {
-  if (reducedMotion) return;
+  if (reducedMotion || isAppleTouchDevice) {
+    disableLayoutMotion();
+    return;
+  }
 
   refreshLayoutMotionRects();
   if (layoutMotionBound) return;
@@ -732,26 +807,113 @@ const loadLaceImage = () => {
 
   laceImagePromise = new Promise((resolve, reject) => {
     const image = new Image();
+    image.decoding = "async";
+    image.fetchPriority = "high";
     image.onload = () => resolve(image);
     image.onerror = reject;
-    image.src = isAppleTouchDevice ? "lace-mask-apple.png?v=1" : "lace-mask.png?v=5";
+    image.src = new URL(
+      isAppleTouchDevice ? "lace-mask-apple.png?v=3" : "lace-mask.png?v=3",
+      document.baseURI
+    ).href;
   });
 
   return laceImagePromise;
 };
 
-const scheduleTransitionWarmup = () => {
-  const warmAssets = () => {
-    loadHtml2Canvas().catch(() => {});
-    loadLaceImage().catch(() => {});
-  };
+const loadPackedLaceImage = () => {
+  if (packedLaceImagePromise) {
+    return packedLaceImagePromise;
+  }
 
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(warmAssets, { timeout: 1200 });
+  packedLaceImagePromise = new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.fetchPriority = "high";
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = new URL(
+      isAppleTouchDevice ? "lace-mask-apple-packed.png?v=3" : "lace-mask-packed.webp?v=1",
+      document.baseURI
+    ).href;
+  });
+
+  return packedLaceImagePromise;
+};
+
+const loadPackedLaceAnalysis = () => {
+  if (packedLaceAnalysisPromise) {
+    return packedLaceAnalysisPromise;
+  }
+
+  packedLaceAnalysisPromise = loadPackedLaceImage().then((image) => {
+    const analysisCanvas = document.createElement("canvas");
+    const analysisContext = analysisCanvas.getContext("2d", { willReadFrequently: true });
+
+    if (!analysisContext) {
+      throw new Error("Lace mask analysis failed");
+    }
+
+    const analysisScale = Math.min(1, 1024 / image.width);
+    analysisCanvas.width = Math.max(1, Math.round(image.width * analysisScale));
+    analysisCanvas.height = Math.max(1, Math.round(image.height * analysisScale));
+    analysisContext.drawImage(image, 0, 0, analysisCanvas.width, analysisCanvas.height);
+
+    const pixels = analysisContext.getImageData(
+      0,
+      0,
+      analysisCanvas.width,
+      analysisCanvas.height
+    ).data;
+    const lowestLacePixel = new Float32Array(analysisCanvas.width);
+
+    for (let x = 0; x < analysisCanvas.width; x += 1) {
+      let lowest = -1;
+
+      for (let y = analysisCanvas.height - 1; y >= 0; y -= 1) {
+        if (pixels[((y * analysisCanvas.width) + x) * 4 + 1] >= 96) {
+          lowest = y;
+          break;
+        }
+      }
+
+      lowestLacePixel[x] = lowest;
+    }
+
+    const analysis = {
+      image,
+      width: analysisCanvas.width,
+      height: analysisCanvas.height,
+      lowestLacePixel
+    };
+    analysisCanvas.width = 1;
+    analysisCanvas.height = 1;
+    return analysis;
+  }).catch((error) => {
+    packedLaceAnalysisPromise = undefined;
+    throw error;
+  });
+
+  return packedLaceAnalysisPromise;
+};
+
+const scheduleTransitionWarmup = () => {
+  const warmCaptureLibrary = () => loadHtml2Canvas().catch(() => {});
+  const warmLace = () => loadPackedLaceAnalysis().catch(() => {});
+
+  if (isAppleTouchDevice) {
+    window.setTimeout(warmLace, 0);
+    window.setTimeout(warmCaptureLibrary, 120);
     return;
   }
 
-  window.setTimeout(warmAssets, 150);
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(warmCaptureLibrary, { timeout: 1200 });
+    window.requestIdleCallback(warmLace, { timeout: 1600 });
+    return;
+  }
+
+  window.setTimeout(warmCaptureLibrary, 150);
+  window.setTimeout(warmLace, 350);
 };
 
 const replacePageContent = (nextDocument, pageUrl = window.location.href) => {
@@ -774,15 +936,29 @@ const replacePageContent = (nextDocument, pageUrl = window.location.href) => {
   });
 };
 
-const loadDocument = async (url) => {
-  const response = await fetch(url.href, { headers: { "X-Requested-With": "fetch" } });
+const loadDocument = (url) => {
+  const cacheKey = url.href;
+  if (documentCache.has(cacheKey)) return documentCache.get(cacheKey);
 
-  if (!response.ok) {
-    throw new Error(`Could not load ${url.href}`);
-  }
+  const request = withTimeout(
+    fetch(cacheKey, {
+      cache: "default",
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "fetch" }
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`Could not load ${cacheKey}`);
+      const html = await response.text();
+      return new DOMParser().parseFromString(html, "text/html");
+    }),
+    15000,
+    `Loading ${cacheKey} timed out`
+  ).catch((error) => {
+    documentCache.delete(cacheKey);
+    throw error;
+  });
 
-  const html = await response.text();
-  return new DOMParser().parseFromString(html, "text/html");
+  documentCache.set(cacheKey, request);
+  return request;
 };
 
 const smooth = (value) => {
@@ -790,36 +966,30 @@ const smooth = (value) => {
   return t * t * (3 - (2 * t));
 };
 
-const createLacePattern = (ctx, scale) => {
-  const size = Math.round(24 * scale);
-  const patternCanvas = document.createElement("canvas");
-  const patternCtx = patternCanvas.getContext("2d");
-  patternCanvas.width = size;
-  patternCanvas.height = size;
-  patternCtx.scale(scale, scale);
-  patternCtx.strokeStyle = "rgba(255, 255, 255, .34)";
-  patternCtx.lineWidth = 1;
-  patternCtx.beginPath();
-  patternCtx.arc(12, 12, 5.5, 0, Math.PI * 2);
-  patternCtx.stroke();
-  patternCtx.strokeStyle = "rgba(255, 255, 255, .22)";
-  patternCtx.beginPath();
-  patternCtx.moveTo(0, 12);
-  patternCtx.lineTo(24, 12);
-  patternCtx.moveTo(12, 0);
-  patternCtx.lineTo(12, 24);
-  patternCtx.stroke();
-  return ctx.createPattern(patternCanvas, "repeat");
-};
-
 const captureCurrentViewport = async () => {
   const html2canvas = await loadHtml2Canvas();
-  const scale = isAppleTouchDevice ? 1 : Math.min(window.devicePixelRatio || 1, 1.15);
+  const scale = isAppleTouchDevice
+    ? getVeilRenderScale()
+    : Math.min(window.devicePixelRatio || 1, 1.15);
 
-  const capturePromise = html2canvas(document.documentElement, {
+  const captureOptions = {
     backgroundColor: null,
     height: window.innerHeight,
+    imageTimeout: isAppleTouchDevice ? 3000 : 3000,
     logging: false,
+    foreignObjectRendering: false,
+    ignoreElements: (element) => {
+      if (!(element instanceof Element)) return false;
+      if (element.matches("[data-mobile-menu], [data-lightbox-modal][aria-hidden='true'], .veil-canvas-transition, .veil-snapshot-fade, .page-reveal-mask")) {
+        return true;
+      }
+
+      if (!isAppleTouchDevice) return false;
+      if (!element.matches(".portfolio-card, img, video, iframe, section, footer")) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.bottom < -96 || rect.top > window.innerHeight + 96;
+    },
+    removeContainer: true,
     scale,
     scrollX: -window.scrollX,
     scrollY: -window.scrollY,
@@ -829,40 +999,194 @@ const captureCurrentViewport = async () => {
     windowWidth: window.innerWidth,
     x: window.scrollX,
     y: window.scrollY
-  });
+  };
 
-  return withTimeout(
-    capturePromise,
-    isAppleTouchDevice ? 5000 : 9000,
+  const runCapture = () => withTimeout(
+    html2canvas(document.body, captureOptions),
+    isAppleTouchDevice ? 7500 : 9000,
     "viewport capture timed out"
   );
+
+  const snapshot = await runCapture();
+  snapshot.dataset.veilCaptureScale = String(scale);
+  return snapshot;
+};
+
+const releaseSnapshotCanvas = (snapshot) => {
+  if (!(snapshot instanceof HTMLCanvasElement)) return;
+  snapshot.width = 1;
+  snapshot.height = 1;
+};
+
+const getPreparedViewportSignature = () => {
+  return [
+    window.location.pathname,
+    window.innerWidth,
+    window.innerHeight,
+    Math.round(window.scrollX),
+    Math.round(window.scrollY)
+  ].join(":");
+};
+
+const invalidatePreparedViewportSnapshot = () => {
+  preparedViewportVersion += 1;
+  window.clearTimeout(preparedViewportTimer);
+  preparedViewportTimer = 0;
+  releaseSnapshotCanvas(preparedViewportSnapshot);
+  preparedViewportSnapshot = null;
+  preparedViewportSignature = "";
+};
+
+const takePreparedViewportSnapshot = () => {
+  const signature = getPreparedViewportSignature();
+
+  if (
+    preparedViewportSnapshot instanceof HTMLCanvasElement &&
+    preparedViewportSignature === signature
+  ) {
+    const snapshot = preparedViewportSnapshot;
+    preparedViewportSnapshot = null;
+    preparedViewportSignature = "";
+    preparedViewportVersion += 1;
+    return Promise.resolve(snapshot);
+  }
+
+  if (
+    preparedViewportCapturePromise &&
+    preparedViewportCaptureSignature === signature
+  ) {
+    preparedViewportCaptureClaimed = true;
+    preparedViewportVersion += 1;
+    window.clearTimeout(preparedViewportTimer);
+    preparedViewportTimer = 0;
+    return preparedViewportCapturePromise;
+  }
+
+  invalidatePreparedViewportSnapshot();
+  return null;
+};
+
+const schedulePreparedViewportSnapshot = (delay = 650, { ignoreIdle = false } = {}) => {
+  if (!isAppleTouchDevice || reducedMotion || isNavigating) return;
+  const isPortfolioPage = Boolean(document.querySelector("[data-portfolio-masonry]"));
+  const requiredIdleTime = isPortfolioPage ? 3200 : 1400;
+
+  window.clearTimeout(preparedViewportTimer);
+  const expectedVersion = preparedViewportVersion;
+
+  preparedViewportTimer = window.setTimeout(() => {
+    preparedViewportTimer = 0;
+
+    const prepare = async () => {
+      if (isNavigating || expectedVersion !== preparedViewportVersion) return;
+
+      const idleFor = performance.now() - lastAppleInteractionAt;
+      if (!ignoreIdle && idleFor < requiredIdleTime) {
+        schedulePreparedViewportSnapshot(Math.ceil(requiredIdleTime - idleFor));
+        return;
+      }
+
+      if (preparedViewportCapturePromise) {
+        await preparedViewportCapturePromise.catch(() => null);
+        schedulePreparedViewportSnapshot(120, { ignoreIdle });
+        return;
+      }
+
+      const signature = getPreparedViewportSignature();
+      const capturePromise = captureCurrentViewport();
+      preparedViewportCapturePromise = capturePromise;
+      preparedViewportCaptureSignature = signature;
+      preparedViewportCaptureClaimed = false;
+
+      try {
+        const snapshot = await capturePromise;
+
+        if (preparedViewportCaptureClaimed) {
+          return;
+        }
+
+        if (
+          isNavigating ||
+          expectedVersion !== preparedViewportVersion ||
+          signature !== getPreparedViewportSignature()
+        ) {
+          releaseSnapshotCanvas(snapshot);
+          return;
+        }
+
+        releaseSnapshotCanvas(preparedViewportSnapshot);
+        preparedViewportSnapshot = snapshot;
+        preparedViewportSignature = signature;
+      } catch (error) {
+        // Navigation can still capture on demand if idle preparation is unavailable.
+      } finally {
+        if (preparedViewportCapturePromise === capturePromise) {
+          preparedViewportCapturePromise = null;
+          preparedViewportCaptureSignature = "";
+          preparedViewportCaptureClaimed = false;
+        }
+      }
+    };
+
+    if (!ignoreIdle && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => void prepare(), {
+        timeout: isPortfolioPage ? 1800 : 900
+      });
+    } else {
+      void prepare();
+    }
+  }, delay);
+};
+
+const getVeilRenderScale = () => {
+  if (!isAppleTouchDevice) return 1;
+
+  const viewportPixels = window.innerWidth * window.innerHeight;
+  const diagnosticTarget = Number(window.__veilDiagnosticRenderPixels);
+  const targetRenderPixels = Number.isFinite(diagnosticTarget) && diagnosticTarget > 0
+    ? diagnosticTarget
+    : isIPhone
+      ? 200000
+      : 160000;
+  const minimumScale = isIPhone ? .38 : .32;
+  const maximumScale = isIPhone ? .72 : .56;
+  return Math.max(minimumScale, Math.min(maximumScale, Math.sqrt(targetRenderPixels / viewportPixels)));
 };
 
 const createCanvasOverlay = (snapshot) => {
   const canvas = document.createElement("canvas");
-  const scale = snapshot.width / window.innerWidth;
+  const renderScale = getVeilRenderScale();
   canvas.className = "veil-canvas-transition";
-  canvas.width = snapshot.width;
-  canvas.height = snapshot.height;
+  canvas.width = isAppleTouchDevice
+    ? Math.max(1, Math.round(window.innerWidth * renderScale))
+    : snapshot.width;
+  canvas.height = isAppleTouchDevice
+    ? Math.max(1, Math.round(window.innerHeight * renderScale))
+    : snapshot.height;
   canvas.style.width = `${window.innerWidth}px`;
   canvas.style.height = `${window.innerHeight}px`;
-  canvas.dataset.scale = String(scale);
+  canvas.dataset.scale = String(canvas.width / window.innerWidth);
   document.body.appendChild(canvas);
   return canvas;
 };
 
 const createSnapshotFadeOverlay = (snapshot) => {
   const canvas = document.createElement("canvas");
+  const renderScale = getVeilRenderScale();
   const context = canvas.getContext("2d");
 
   canvas.className = "veil-snapshot-fade";
-  canvas.width = snapshot.width;
-  canvas.height = snapshot.height;
+  canvas.width = isAppleTouchDevice
+    ? Math.max(1, Math.round(window.innerWidth * renderScale))
+    : snapshot.width;
+  canvas.height = isAppleTouchDevice
+    ? Math.max(1, Math.round(window.innerHeight * renderScale))
+    : snapshot.height;
   canvas.style.width = `${window.innerWidth}px`;
   canvas.style.height = `${window.innerHeight}px`;
 
   if (context) {
-    context.drawImage(snapshot, 0, 0);
+    context.drawImage(snapshot, 0, 0, canvas.width, canvas.height);
   }
 
   document.body.appendChild(canvas);
@@ -870,12 +1194,40 @@ const createSnapshotFadeOverlay = (snapshot) => {
 };
 
 const createPageRevealMask = () => {
-  const mask = document.createElement("div");
+  const mask = document.createElement("canvas");
   mask.className = "page-reveal-mask";
   mask.setAttribute("aria-hidden", "true");
-  mask.style.setProperty("--reveal-y", `${window.innerHeight}px`);
+  mask.width = window.innerWidth;
+  mask.height = window.innerHeight;
+  mask.style.width = `${window.innerWidth}px`;
+  mask.style.height = `${window.innerHeight}px`;
   document.body.appendChild(mask);
   return mask;
+};
+
+const paintRevealMask = (mask, points) => {
+  if (!(mask instanceof HTMLCanvasElement) || points.length < 3) return;
+  const context = mask.getContext("2d", { alpha: true });
+  if (!context) return;
+
+  context.clearRect(0, 0, mask.width, mask.height);
+  context.beginPath();
+  context.moveTo(points[0][0], points[0][1]);
+  for (let index = 1; index < points.length; index += 1) {
+    context.lineTo(points[index][0], points[index][1]);
+  }
+  context.closePath();
+  context.fillStyle = "rgba(251, 250, 246, 0.35)";
+  context.fill();
+};
+
+const paintRectangularRevealMask = (mask, revealY) => {
+  paintRevealMask(mask, [
+    [0, 0],
+    [mask.width, 0],
+    [mask.width, revealY],
+    [0, revealY]
+  ]);
 };
 
 const createShader = (gl, type, source) => {
@@ -884,23 +1236,60 @@ const createShader = (gl, type, source) => {
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    throw new Error(gl.getShaderInfoLog(shader) || "Shader compile failed");
+    const message = gl.getShaderInfoLog(shader) || "Shader compile failed";
+    gl.deleteShader(shader);
+    throw new Error(message);
   }
 
   return shader;
 };
 
 const createProgram = (gl, vertexSource, fragmentSource) => {
-  const program = gl.createProgram();
-  gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vertexSource));
-  gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fragmentSource));
-  gl.linkProgram(program);
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+  let fragmentShader;
 
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    throw new Error(gl.getProgramInfoLog(program) || "Program link failed");
+  try {
+    fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+  } catch (error) {
+    gl.deleteShader(vertexShader);
+    throw error;
+  }
+
+  const program = gl.createProgram();
+  let linked = false;
+
+  try {
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program) || "Program link failed");
+    }
+
+    linked = true;
+  } finally {
+    gl.detachShader(program, vertexShader);
+    gl.deleteShader(vertexShader);
+    gl.detachShader(program, fragmentShader);
+    gl.deleteShader(fragmentShader);
+
+    if (!linked) {
+      gl.deleteProgram(program);
+    }
   }
 
   return program;
+};
+
+const releaseWebGLContext = (gl) => {
+  if (!gl) return;
+
+  try {
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch (error) {
+    // Context destruction is best-effort on older WebKit builds.
+  }
 };
 
 const createDomFallbackSheet = () => {
@@ -966,8 +1355,7 @@ const animateDomFallback = (sheet, revealMask) => new Promise((resolve) => {
       const elapsed = now - start;
       const progress = Math.min(1, Math.max(0, (elapsed - introDuration) / animationDuration));
       const revealY = window.innerHeight * (1 - smooth(progress));
-      revealMask.style.setProperty("--reveal-y", `${window.innerHeight * (1 - smooth(progress))}px`);
-      revealMask.style.clipPath = `polygon(0px 0px, 100vw 0px, 100vw ${revealY}px, 0px ${revealY}px)`;
+      paintRectangularRevealMask(revealMask, revealY);
 
       if (progress < 1) {
         requestAnimationFrame(updateReveal);
@@ -988,49 +1376,130 @@ const createCanvas2DFallback = (canvas) => {
   fallback.width = canvas.width;
   fallback.height = canvas.height;
   fallback.style.cssText = canvas.style.cssText;
+  fallback.style.visibility = "visible";
   fallback.dataset.scale = canvas.dataset.scale;
   canvas.insertAdjacentElement("afterend", fallback);
   canvas.style.visibility = "hidden";
   return fallback;
 };
 
-const animateVeilCanvas = async (canvas, snapshot, revealMask) => {
-  let gl = null;
+const clearWebGLErrors = (gl) => {
+  for (let index = 0; index < 16 && gl.getError() !== gl.NO_ERROR; index += 1) {
+    // Drain errors left by WebKit's context initialization before checking uploads.
+  }
+};
+
+const createScaledTextureSource = (image, maxWidth = 1024) => {
+  if (!(image instanceof HTMLImageElement) || image.width <= maxWidth) return image;
+
+  const scale = maxWidth / image.width;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { alpha: true });
+
+  if (!context) return image;
+
+  canvas.width = maxWidth;
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "medium";
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+};
+
+const animateVeil2DFallback = async (sourceCanvas, snapshot, revealMask) => {
+  const physicsCanvas = createCanvas2DFallback(sourceCanvas);
 
   try {
-    gl = canvas.getContext("webgl", {
+    await animateVeilCanvas2D(physicsCanvas, snapshot, revealMask);
+  } catch (error) {
+    const compositorCanvas = createCanvas2DFallback(physicsCanvas);
+
+    try {
+      await animateVeilCompositorFallback(compositorCanvas, snapshot, revealMask);
+    } finally {
+      compositorCanvas.remove();
+    }
+  } finally {
+    physicsCanvas.remove();
+  }
+};
+
+const getVeilWebGLContext = (canvas, powerPreference = "low-power") => {
+  try {
+    return canvas.getContext("webgl", {
       alpha: true,
       antialias: !isAppleTouchDevice,
       depth: false,
       failIfMajorPerformanceCaveat: false,
-      powerPreference: "low-power",
+      powerPreference,
       preserveDrawingBuffer: false,
       premultipliedAlpha: true
     });
   } catch (error) {
-    gl = null;
-  }
-
-  if (!gl) {
-    await animateVeilCanvas2D(canvas, snapshot, revealMask);
-    return;
-  }
-
-  try {
-    await animateVeilWebGL(canvas, snapshot, gl, revealMask);
-  } catch (error) {
-    const fallback = createCanvas2DFallback(canvas);
-
-    try {
-      await animateVeilCanvas2D(fallback, snapshot, revealMask);
-    } finally {
-      fallback.remove();
-    }
+    return null;
   }
 };
 
-const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
-  const laceImage = await loadLaceImage();
+const animateVeilCanvas = async (canvas, snapshot, revealMask) => {
+  const gl = getVeilWebGLContext(
+    canvas,
+    isAppleTouchDevice ? "high-performance" : "low-power"
+  );
+  let attemptedWebGL = false;
+
+  if (gl) {
+    attemptedWebGL = true;
+    try {
+      await animateVeilWebGL(canvas, snapshot, gl, revealMask);
+      return;
+    } catch (error) {
+      // Older mobile WebKit can lose the first context while allocating textures.
+      releaseWebGLContext(gl);
+    }
+  }
+
+  if (isAppleTouchDevice) {
+    const retryCanvas = createCanvas2DFallback(canvas);
+    const retryGl = getVeilWebGLContext(retryCanvas, "default");
+
+    try {
+      if (retryGl) {
+        retryCanvas.dataset.veilRenderer = "webgl-retry";
+        await animateVeilWebGL(retryCanvas, snapshot, retryGl, revealMask, {
+          safeTextureUpload: true,
+          rendererName: "webgl-retry"
+        });
+        return;
+      }
+
+      await animateVeil2DFallback(retryCanvas, snapshot, revealMask);
+      return;
+    } catch (error) {
+      releaseWebGLContext(retryGl);
+      await animateVeil2DFallback(retryCanvas, snapshot, revealMask);
+      return;
+    } finally {
+      retryCanvas.remove();
+    }
+  }
+
+  if (attemptedWebGL) {
+    await animateVeil2DFallback(canvas, snapshot, revealMask);
+  } else {
+    await animateVeilCanvas2D(canvas, snapshot, revealMask);
+  }
+};
+
+const animateVeilWebGL = async (
+  canvas,
+  snapshot,
+  gl,
+  revealMask,
+  { safeTextureUpload = false, rendererName = "webgl" } = {}
+) => {
+  const laceAnalysis = await loadPackedLaceAnalysis();
+  const laceImage = laceAnalysis.image;
+  canvas.dataset.veilRenderer = rendererName;
 
   return new Promise((resolve, reject) => {
 
@@ -1039,8 +1508,6 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   const cols = 48;
   const rows = window.innerHeight < 700 ? 14 : 18;
   const vertexCount = (cols + 1) * (rows + 1);
-  const positions = new Float32Array(vertexCount * 2);
-  const screenPoints = new Float32Array(vertexCount * 2);
   const texcoords = new Float32Array(vertexCount * 2);
   const indices = new Uint16Array(cols * rows * 6);
   const imageAspect = laceImage.width / laceImage.height;
@@ -1062,20 +1529,7 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   const animationDuration = motionDelay + motionDuration;
   const totalDuration = introDuration + animationDuration;
   const start = performance.now();
-  const canvasScale = Number(canvas.dataset.scale) || 1;
   const wideCloth = Math.min(1, Math.max(0, (window.innerWidth - 900) / 420));
-  const laceCanvas = document.createElement("canvas");
-  const laceContext = laceCanvas.getContext("2d", { willReadFrequently: true });
-
-  if (!laceContext) {
-    reject(new Error("Lace mask analysis failed"));
-    return;
-  }
-
-  laceCanvas.width = laceImage.width;
-  laceCanvas.height = laceImage.height;
-  laceContext.drawImage(laceImage, 0, 0);
-  let laceAlpha = laceContext.getImageData(0, 0, laceCanvas.width, laceCanvas.height).data;
   const hemProfile = Array.from({ length: cols + 1 }, (_, col) => {
     const x01 = col / cols;
     const laceU = (x01 - coverOffsetX) / coverWidth;
@@ -1089,21 +1543,21 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
         continue;
       }
 
-      const x = Math.max(0, Math.min(laceCanvas.width - 1, Math.round(sampleU * (laceCanvas.width - 1))));
-
-      for (let y = laceCanvas.height - 1; y >= 0; y -= 1) {
-        if (laceAlpha[((y * laceCanvas.width) + x) * 4 + 3] >= 96) {
-          lowest = Math.max(lowest, y);
-          break;
-        }
-      }
+      const x = Math.max(
+        0,
+        Math.min(laceAnalysis.width - 1, Math.round(sampleU * (laceAnalysis.width - 1)))
+      );
+      lowest = Math.max(lowest, laceAnalysis.lowestLacePixel[x]);
     }
 
     if (lowest < 0) {
       return 1;
     }
 
-    return Math.max(.32, Math.min(1, coverOffsetY + ((lowest / (laceCanvas.height - 1)) * coverHeight)));
+    return Math.max(
+      .32,
+      Math.min(1, coverOffsetY + ((lowest / (laceAnalysis.height - 1)) * coverHeight))
+    );
   });
 
   for (let pass = 0; pass < 2; pass += 1) {
@@ -1114,53 +1568,12 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
     }
   }
 
-  laceAlpha = null;
-  laceCanvas.width = 1;
-  laceCanvas.height = 1;
-
-  const colData = Array.from({ length: cols + 1 }, (_, col) => {
-    const x01 = col / cols;
-    const xNorm = x01 - .5;
-    const fabricCosh = Math.cosh(xNorm / .46) - 1;
-
-    return {
-      centerRegion: smooth((x01 - .45) / .035) * (1 - smooth((x01 - .55) / .035)),
-      edgeRegion: Math.max(1 - smooth(x01 / .45), smooth((x01 - .55) / .45)),
-      fabricCosh,
-      handleDistance: Math.min(Math.abs(x01 - .45), Math.abs(x01 - .55)),
-      hemYNorm: hemProfile[col],
-      sheetCosh: Math.cosh(xNorm / .72) - 1,
-      x01,
-      xNorm
-    };
-  });
-  const fabricCoshMax = Math.cosh(.5 / .46) - 1;
-  const vertexData = Array.from({ length: vertexCount }, (_, vertex) => {
-    const row = Math.floor(vertex / (cols + 1));
-    const col = vertex % (cols + 1);
-    const yNorm = (row / rows) * colData[col].hemYNorm;
-
-    return {
-      anchor: smooth(yNorm / .055),
-      bottomGrip: smooth((yNorm - .84) / .16),
-      fabricDepth: Math.min(1, Math.max(0, (yNorm - .1) / .9)),
-      lowerCorner: smooth((yNorm - .78) / .22),
-      lowerEdge: smooth(yNorm / .08),
-      lowerRegionY: smooth((yNorm - .95) / .025) * (1 - smooth((yNorm - .99) / .015)),
-      releaseDelay: .9 * Math.pow(1 - yNorm, 2.65),
-      sideRegionY: smooth((yNorm - .1) / .08),
-      topLock: Math.pow(yNorm, 1.22),
-      y: yNorm * height,
-      yNorm
-    };
-  });
-
   let pointer = 0;
   for (let row = 0; row <= rows; row += 1) {
     for (let col = 0; col <= cols; col += 1) {
       const vertex = (row * (cols + 1)) + col;
       texcoords[vertex * 2] = col / cols;
-      texcoords[(vertex * 2) + 1] = vertexData[vertex].yNorm;
+      texcoords[(vertex * 2) + 1] = (row / rows) * hemProfile[col];
 
       if (row < rows && col < cols) {
         const a = vertex;
@@ -1177,16 +1590,103 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
     }
   }
 
-  const vertexSource = `
-    attribute vec2 a_position;
+  const fullVertexSource = `
+    precision highp float;
     attribute vec2 a_texcoord;
+    uniform float u_width;
+    uniform float u_height;
+    uniform float u_e;
+    uniform float u_zMax;
+    uniform float u_globalExit;
+    uniform float u_guideY;
+    uniform float u_wideCloth;
     varying vec2 v_texcoord;
+
+    float smoothValue(float value) {
+      float t = clamp(value, 0.0, 1.0);
+      return t * t * (3.0 - (2.0 * t));
+    }
+
+    float coshValue(float value) {
+      return (exp(value) + exp(-value)) * .5;
+    }
+
     void main() {
-      gl_Position = vec4(a_position, 0.0, 1.0);
+      float x01 = a_texcoord.x;
+      float yNorm = a_texcoord.y;
+      float xNorm = x01 - .5;
+      float y = yNorm * u_height;
+      float anchor = smoothValue(yNorm / .055);
+      float bottomGrip = smoothValue((yNorm - .84) / .16);
+      float fabricDepth = clamp((yNorm - .1) / .9, 0.0, 1.0);
+      float lowerCorner = smoothValue((yNorm - .78) / .22);
+      float lowerEdge = smoothValue(yNorm / .08);
+      float lowerRegionY = smoothValue((yNorm - .95) / .025) * (1.0 - smoothValue((yNorm - .99) / .015));
+      float releaseDelay = .9 * pow(1.0 - yNorm, 2.65);
+      float sideRegionY = smoothValue((yNorm - .1) / .08);
+      float topLock = pow(yNorm, 1.22);
+      float centerRegion = smoothValue((x01 - .45) / .035) * (1.0 - smoothValue((x01 - .55) / .035));
+      float edgeRegion = max(1.0 - smoothValue(x01 / .45), smoothValue((x01 - .55) / .45));
+      float fabricCosh = coshValue(xNorm / .46) - 1.0;
+      float fabricCoshMax = coshValue(.5 / .46) - 1.0;
+      float handleDistance = min(abs(x01 - .45), abs(x01 - .55));
+      float sheetCosh = coshValue(xNorm / .72) - 1.0;
+      float release = anchor * smoothValue((u_e - releaseDelay) / max(.12, 1.0 - releaseDelay));
+      float verticalArc = sin(3.141592653589793 * release) * pow(yNorm, .7);
+      float handleInfluence = exp(-(handleDistance * handleDistance) / .018) * bottomGrip;
+      float z = release * u_zMax * verticalArc * (.74 + (handleInfluence * .46) - (sheetCosh * .28));
+      float sideSetback = release * sheetCosh * u_height * .12;
+      float bottomPull = bottomGrip * u_height * .42 * release;
+      float lift = (u_height * 1.58 * topLock * release) + (z * (.28 + handleInfluence * .3)) + bottomPull;
+      float xCurve = xNorm * z * .1;
+      float projectedScale = 1.0 + (z / (u_height * 2.6));
+      float sideRegion = max(
+        (1.0 - smoothValue((x01 - .45) / .045)) * sideRegionY,
+        smoothValue((x01 - .55) / .045) * sideRegionY
+      );
+      float lowerRegion = centerRegion * lowerRegionY;
+      float realismRegion = max(sideRegion, lowerRegion);
+      float cornerWeight = sideRegion * smoothValue((yNorm - .72) / .22);
+      float leaderGate = smoothValue((y - u_guideY) / (u_height * (.12 + (u_wideCloth * cornerWeight * .08))));
+      float cornerDelayAmount = u_wideCloth * cornerWeight;
+      float delayedCornerGate = leaderGate * (1.0 - cornerDelayAmount + (smoothValue((release - .16) / .84) * cornerDelayAmount));
+      float fabricCatenary = fabricCosh / fabricCoshMax;
+      float fabricPulse = realismRegion * delayedCornerGate * sin(3.141592653589793 * release) * (1.0 - (u_globalExit * .78));
+      float fabricBelly = sin(3.141592653589793 * fabricDepth) * fabricPulse;
+      float naturalZ = fabricPulse * u_zMax * (.65 + (fabricDepth * .7)) * (.82 + (fabricCatenary * .36));
+      float gravitationalSag = fabricPulse * u_height * (.075 + (fabricDepth * .105)) * (1.0 - (fabricCatenary * .24));
+      float catenarySetback = fabricCatenary * fabricBelly * u_height * .105;
+      float clothCurl = release * release * fabricPulse * u_height * .085 * (1.0 - (abs(xNorm) * .46));
+      float clothSwing = sin((release * 3.141592653589793 * 2.4) + (fabricCatenary * 3.141592653589793 * 1.6) + (fabricDepth * 1.1)) * fabricPulse;
+      float sx = (xNorm * u_width * projectedScale) + (u_width * .5) + xCurve;
+      float sy = y - lift - sideSetback - (u_globalExit * u_height * .36);
+      float lowerEdgeRelease = lowerEdge * edgeRegion * release * (1.0 - (u_globalExit * .75));
+      float edgeDirection = xNorm < 0.0 ? 1.0 : -1.0;
+      float edgeInset = lowerEdgeRelease * u_width * .045 * (1.0 + (fabricDepth * .35));
+      sx += (clothSwing * u_width * .018 * (1.0 - (fabricCatenary * .18))) + (xNorm * naturalZ * .12);
+      sx += edgeDirection * edgeInset;
+      sy += gravitationalSag + catenarySetback - clothCurl + (naturalZ * .12);
+      float cornerLagStrength = edgeRegion * lowerCorner * sideRegion;
+      float cornerTargetY = min(u_height, u_guideY + (u_height * .9));
+      sy += (cornerTargetY - sy) * cornerLagStrength;
+
+      gl_Position = vec4((sx / u_width * 2.0) - 1.0, 1.0 - (sy / u_height * 2.0), 0.0, 1.0);
       v_texcoord = a_texcoord;
     }
   `;
-  const fragmentSource = `
+  const diagnosticVertexSource = `
+    precision highp float;
+    attribute vec2 a_texcoord;
+    varying vec2 v_texcoord;
+    void main() {
+      gl_Position = vec4((a_texcoord.x * 2.0) - 1.0, 1.0 - (a_texcoord.y * 2.0), 0.0, 1.0);
+      v_texcoord = a_texcoord;
+    }
+  `;
+  const vertexSource = window.__veilDiagnosticSimpleShader
+    ? diagnosticVertexSource
+    : fullVertexSource;
+  const fullFragmentSource = `
     precision mediump float;
     uniform sampler2D u_pageTexture;
     uniform sampler2D u_laceTexture;
@@ -1201,15 +1701,9 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
       if (laceUv.x < 0.0 || laceUv.x > 1.0 || laceUv.y < 0.0 || laceUv.y > 1.0) {
         laceUv = clamp(laceUv, 0.0, 1.0);
       }
-      float laceMask = texture2D(u_laceTexture, laceUv).a;
-      laceMask = smoothstep(.18, .86, laceMask);
-      vec2 outlineStep = vec2(.0005, .0005);
-      float outlineMask = 0.0;
-      outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv + vec2(outlineStep.x, 0.0), 0.0, 1.0)).a);
-      outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv - vec2(outlineStep.x, 0.0), 0.0, 1.0)).a);
-      outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv + vec2(0.0, outlineStep.y), 0.0, 1.0)).a);
-      outlineMask = max(outlineMask, texture2D(u_laceTexture, clamp(laceUv - vec2(0.0, outlineStep.y), 0.0, 1.0)).a);
-      outlineMask = smoothstep(.12, .62, outlineMask) * (1.0 - laceMask);
+      vec4 laceSample = texture2D(u_laceTexture, laceUv);
+      float laceMask = smoothstep(.18, .86, laceSample.g);
+      float outlineMask = smoothstep(.12, .62, laceSample.r) * (1.0 - laceMask);
       float materialAlpha = mix(.2, 1.0, laceMask);
       vec3 paleFabric = mix(color.rgb, vec3(1.0), .2 * u_material);
       vec3 whiteFabric = mix(paleFabric, vec3(1.0), u_white * .72);
@@ -1221,18 +1715,40 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
       verticalOpacity = mix(verticalOpacity, .8, clamp((v_texcoord.y - .5) / .25, 0.0, 1.0));
       verticalOpacity = mix(verticalOpacity, 1.0, clamp((v_texcoord.y - .75) / .15, 0.0, 1.0));
       color.a *= max(materialAlpha, outlineMask * u_material) * u_opacity * verticalOpacity;
-      gl_FragColor = color;
+      float revealAlpha = .35;
+      float combinedAlpha = color.a + (revealAlpha * (1.0 - color.a));
+      vec3 combinedColor = (
+        (color.rgb * color.a) +
+        (vec3(.9843, .9804, .9647) * revealAlpha * (1.0 - color.a))
+      ) / max(combinedAlpha, .0001);
+      gl_FragColor = vec4(combinedColor, combinedAlpha);
     }
   `;
+  const diagnosticFragmentSource = `
+    precision mediump float;
+    uniform sampler2D u_pageTexture;
+    varying vec2 v_texcoord;
+    void main() {
+      gl_FragColor = texture2D(u_pageTexture, v_texcoord);
+    }
+  `;
+  const fragmentSource = window.__veilDiagnosticSimpleShader
+    ? diagnosticFragmentSource
+    : fullFragmentSource;
 
   const program = createProgram(gl, vertexSource, fragmentSource);
-  const positionBuffer = gl.createBuffer();
   const texcoordBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const pageTexture = gl.createTexture();
   const laceTexture = gl.createTexture();
-  const positionLocation = gl.getAttribLocation(program, "a_position");
   const texcoordLocation = gl.getAttribLocation(program, "a_texcoord");
+  const widthLocation = gl.getUniformLocation(program, "u_width");
+  const heightLocation = gl.getUniformLocation(program, "u_height");
+  const progressLocation = gl.getUniformLocation(program, "u_e");
+  const zMaxLocation = gl.getUniformLocation(program, "u_zMax");
+  const globalExitLocation = gl.getUniformLocation(program, "u_globalExit");
+  const guideYLocation = gl.getUniformLocation(program, "u_guideY");
+  const wideClothLocation = gl.getUniformLocation(program, "u_wideCloth");
   const pageTextureLocation = gl.getUniformLocation(program, "u_pageTexture");
   const laceTextureLocation = gl.getUniformLocation(program, "u_laceTexture");
   const opacityLocation = gl.getUniformLocation(program, "u_opacity");
@@ -1247,12 +1763,39 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   gl.useProgram(program);
 
   gl.activeTexture(gl.TEXTURE0);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
   gl.bindTexture(gl.TEXTURE_2D, pageTexture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, snapshot);
+  let pageTextureSource = snapshot;
+  let laceTextureSource = laceImage;
+
+  if (snapshot.width !== width || snapshot.height !== height) {
+    const scaledSnapshot = document.createElement("canvas");
+    const scaledContext = scaledSnapshot.getContext("2d", { alpha: true });
+    scaledSnapshot.width = width;
+    scaledSnapshot.height = height;
+
+    if (scaledContext) {
+      scaledContext.drawImage(snapshot, 0, 0, width, height);
+      pageTextureSource = scaledSnapshot;
+    }
+  }
+
+  clearWebGLErrors(gl);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pageTextureSource);
+
+  if (gl.getError() !== gl.NO_ERROR) {
+    throw new Error("WebGL page texture upload failed");
+  }
+
+  if (pageTextureSource !== snapshot) {
+    pageTextureSource.width = 1;
+    pageTextureSource.height = 1;
+  }
   gl.uniform1i(pageTextureLocation, 0);
 
   gl.activeTexture(gl.TEXTURE1);
@@ -1261,10 +1804,25 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, laceImage);
+  if (safeTextureUpload) {
+    laceTextureSource = createScaledTextureSource(laceImage);
+  }
+  clearWebGLErrors(gl);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, laceTextureSource);
+
+  if (gl.getError() !== gl.NO_ERROR) {
+    throw new Error("WebGL lace texture upload failed");
+  }
+  if (laceTextureSource !== laceImage) {
+    laceTextureSource.width = 1;
+    laceTextureSource.height = 1;
+  }
   gl.uniform1i(laceTextureLocation, 1);
 
   gl.uniform4f(laceCoverLocation, coverWidth, coverHeight, coverOffsetX, coverOffsetY);
+  gl.uniform1f(widthLocation, width);
+  gl.uniform1f(heightLocation, height);
+  gl.uniform1f(wideClothLocation, wideCloth);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, texcoords, gl.STATIC_DRAW);
@@ -1274,20 +1832,86 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, positions.byteLength, gl.DYNAMIC_DRAW);
+  let transferCanvas = null;
+  let transferContext = null;
+  if (window.__veilDiagnosticTransferWebGLTo2D) {
+    transferCanvas = document.createElement("canvas");
+    transferCanvas.className = canvas.className;
+    transferCanvas.width = canvas.width;
+    transferCanvas.height = canvas.height;
+    transferCanvas.style.cssText = canvas.style.cssText;
+    transferCanvas.dataset.scale = canvas.dataset.scale;
+    transferCanvas.dataset.veilRenderer = "webgl-to-2d";
+    transferContext = transferCanvas.getContext("2d", {
+      alpha: true,
+      desynchronized: true
+    });
 
+    if (transferContext) {
+      canvas.insertAdjacentElement("afterend", transferCanvas);
+      canvas.remove();
+    } else {
+      transferCanvas = null;
+    }
+  }
+
+  let settled = false;
+  let revealMaskHidden = false;
+  const hideRevealMask = () => {
+    if (!revealMaskHidden && revealMask?.isConnected) {
+      revealMask.style.visibility = "hidden";
+      revealMaskHidden = true;
+    }
+  };
+  const restoreRevealMask = () => {
+    if (revealMaskHidden && revealMask?.isConnected) {
+      revealMask.style.visibility = "visible";
+    }
+    revealMaskHidden = false;
+  };
+  const cleanupWebGL = () => {
+    canvas.removeEventListener("webglcontextlost", handleContextLoss);
+    transferCanvas?.remove();
+
+    try {
+      gl.deleteBuffer(texcoordBuffer);
+      gl.deleteBuffer(indexBuffer);
+      gl.deleteTexture(pageTexture);
+      gl.deleteTexture(laceTexture);
+      gl.deleteProgram(program);
+    } catch (error) {
+      // A lost WebGL context can reject cleanup calls on older WebKit builds.
+    } finally {
+      releaseWebGLContext(gl);
+    }
+  };
+  const failWebGL = (error) => {
+    if (settled) return;
+    settled = true;
+    restoreRevealMask();
+    cleanupWebGL();
+    reject(error);
+  };
   const handleContextLoss = (event) => {
     event.preventDefault();
-    reject(new Error("WebGL context lost"));
+    failWebGL(new Error("WebGL context lost"));
   };
   const finishWebGL = () => {
-    canvas.removeEventListener("webglcontextlost", handleContextLoss);
+    if (settled) return;
+    settled = true;
+    if (revealMask instanceof HTMLCanvasElement) {
+      revealMask.remove();
+      revealMask.width = 1;
+      revealMask.height = 1;
+    }
+    cleanupWebGL();
     resolve();
   };
   canvas.addEventListener("webglcontextlost", handleContextLoss, { once: true });
 
   const render = (now) => {
+    if (settled) return;
+    hideRevealMask();
     const elapsed = now - start;
     const t = Math.min(1, elapsed / totalDuration);
     const intro = smooth(elapsed / introDuration);
@@ -1307,95 +1931,21 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
     const guideZ = guideRelease * zMax * guideVerticalArc * (.74 + (guideHandle * .46));
     const guideLift = (height * 2 * guideRelease) + (guideZ * (.28 + guideHandle * .3));
     const guideY = height - guideLift - (globalExit * height * .36);
-    for (let row = 0; row <= rows; row += 1) {
-      for (let col = 0; col <= cols; col += 1) {
-        const vertex = (row * (cols + 1)) + col;
-        const vertexInfo = vertexData[vertex];
-        const { anchor, bottomGrip, fabricDepth, lowerCorner, lowerEdge, lowerRegionY, releaseDelay, sideRegionY, topLock, y, yNorm } = vertexInfo;
-        const colInfo = colData[col];
-        const { centerRegion, edgeRegion, fabricCosh, handleDistance, sheetCosh, x01, xNorm } = colInfo;
-        const release = anchor * smooth((e - releaseDelay) / Math.max(.12, 1 - releaseDelay));
-        const verticalArc = Math.sin(Math.PI * release) * Math.pow(yNorm, .7);
-        const handleInfluence = Math.exp(-(handleDistance * handleDistance) / .018) * bottomGrip;
-        const coshShape = sheetCosh;
-        const z = release * zMax * verticalArc * (.74 + (handleInfluence * .46) - (coshShape * .28));
-        const sideSetback = release * coshShape * height * .12;
-        const bottomPull = bottomGrip * height * .42 * release;
-        const lift = (height * 1.58 * topLock * release) + (z * (.28 + handleInfluence * .3)) + bottomPull;
-        const xCurve = xNorm * z * .1;
-        const projectedScale = 1 + (z / (height * 2.6));
-        const sideRegion = Math.max(
-          (1 - smooth((x01 - .45) / .045)) * sideRegionY,
-          smooth((x01 - .55) / .045) * sideRegionY
-        );
-        const lowerRegion = centerRegion * lowerRegionY;
-        const realismRegion = Math.max(sideRegion, lowerRegion);
-        const cornerWeight = sideRegion * smooth((yNorm - .72) / .22);
-        const leaderGate = smooth((y - guideY) / (height * (.12 + (wideCloth * cornerWeight * .08))));
-        const cornerDelayAmount = wideCloth * cornerWeight;
-        const delayedCornerGate = leaderGate * (1 - cornerDelayAmount + (smooth((release - .16) / .84) * cornerDelayAmount));
-        const fabricCatenary = fabricCosh / fabricCoshMax;
-        const sideWeight = 1;
-        const fabricPulse = realismRegion * delayedCornerGate * Math.sin(Math.PI * release) * (1 - (globalExit * .78));
-        const fabricBelly = Math.sin(Math.PI * fabricDepth) * fabricPulse;
-        const naturalZ = fabricPulse * zMax * (.65 + (fabricDepth * .7)) * (.82 + (fabricCatenary * .36)) * sideWeight;
-        const gravitationalSag = fabricPulse * height * (.075 + (fabricDepth * .105)) * (1 - (fabricCatenary * .24));
-        const catenarySetback = fabricCatenary * fabricBelly * height * .105;
-        const clothCurl = release * release * fabricPulse * height * .085 * (1 - (Math.abs(xNorm) * .46)) / sideWeight;
-        const clothSwing = Math.sin((release * Math.PI * 2.4) + (fabricCatenary * Math.PI * 1.6) + (fabricDepth * 1.1)) * fabricPulse;
-        let sx = ((xNorm * width * projectedScale) + (width / 2) + xCurve);
-        let sy = y - lift - sideSetback - (globalExit * height * .36);
-        const lowerEdgeRelease = lowerEdge * edgeRegion * release * (1 - (globalExit * .75));
-        const edgeDirection = xNorm < 0 ? 1 : -1;
-        const edgeInset = lowerEdgeRelease * width * .045 * (1 + (fabricDepth * .35));
-        sx += (clothSwing * width * .018 * (1 - (fabricCatenary * .18))) + (xNorm * naturalZ * .12);
-        sx += edgeDirection * edgeInset;
-        sy += gravitationalSag + catenarySetback - clothCurl + (naturalZ * .12);
-        const cornerLagStrength = edgeRegion * lowerCorner * sideRegion;
-        const cornerTargetY = Math.min(height, guideY + (height * .9));
-        sy += (cornerTargetY - sy) * cornerLagStrength;
-        positions[vertex * 2] = (sx / width * 2) - 1;
-        positions[(vertex * 2) + 1] = 1 - (sy / height * 2);
-        screenPoints[vertex * 2] = sx / canvasScale;
-        screenPoints[(vertex * 2) + 1] = sy / canvasScale;
-      }
-    }
-
-    if (revealMask) {
-      const outline = [];
-
-      for (let col = 0; col <= cols; col += 1) {
-        const vertex = col;
-        outline.push(`${screenPoints[vertex * 2].toFixed(1)}px ${screenPoints[(vertex * 2) + 1].toFixed(1)}px`);
-      }
-
-      for (let row = 1; row <= rows; row += 1) {
-        const vertex = (row * (cols + 1)) + cols;
-        outline.push(`${screenPoints[vertex * 2].toFixed(1)}px ${screenPoints[(vertex * 2) + 1].toFixed(1)}px`);
-      }
-
-      for (let col = cols - 1; col >= 0; col -= 1) {
-        const vertex = (rows * (cols + 1)) + col;
-        outline.push(`${screenPoints[vertex * 2].toFixed(1)}px ${screenPoints[(vertex * 2) + 1].toFixed(1)}px`);
-      }
-
-      for (let row = rows - 1; row >= 1; row -= 1) {
-        const vertex = row * (cols + 1);
-        outline.push(`${screenPoints[vertex * 2].toFixed(1)}px ${screenPoints[(vertex * 2) + 1].toFixed(1)}px`);
-      }
-
-      revealMask.style.clipPath = `polygon(${outline.join(",")})`;
-    }
-
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform1f(progressLocation, e);
+    gl.uniform1f(zMaxLocation, zMax);
+    gl.uniform1f(globalExitLocation, globalExit);
+    gl.uniform1f(guideYLocation, guideY);
     gl.uniform1f(opacityLocation, opacity);
     gl.uniform1f(materialLocation, material);
     gl.uniform1f(whiteLocation, white);
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    if (!window.__veilDiagnosticSkipWebGLDraw) {
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    }
+    if (transferContext && transferCanvas) {
+      transferContext.clearRect(0, 0, width, height);
+      transferContext.drawImage(canvas, 0, 0, width, height);
+    }
 
     if (t < 1) {
       requestAnimationFrame(safeRender);
@@ -1409,8 +1959,7 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
     try {
       render(now);
     } catch (error) {
-      canvas.removeEventListener("webglcontextlost", handleContextLoss);
-      reject(error);
+      failWebGL(error);
     }
   };
 
@@ -1418,104 +1967,230 @@ const animateVeilWebGL = async (canvas, snapshot, gl, revealMask) => {
   });
 };
 
-const animateVeilCanvas2D = (canvas, snapshot, revealMask) => new Promise((resolve) => {
-  const ctx = canvas.getContext("2d", { alpha: true });
-  const scale = Number(canvas.dataset.scale) || 1;
+const drawCoverBottom = (context, image, width, height) => {
+  const coverScale = Math.max(width / image.width, height / image.height);
+  const drawWidth = image.width * coverScale;
+  const drawHeight = image.height * coverScale;
+  const drawX = (width - drawWidth) / 2;
+  const drawY = height - drawHeight;
+  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+};
+
+const createVeilTexture2D = (snapshot, laceImage, width, height) => {
+  const texture = document.createElement("canvas");
+  const mask = document.createElement("canvas");
+  const patternedPage = document.createElement("canvas");
+  const outline = document.createElement("canvas");
+  const textureContext = texture.getContext("2d", { alpha: true });
+  const maskContext = mask.getContext("2d", { alpha: true });
+  const patternedContext = patternedPage.getContext("2d", { alpha: true });
+  const outlineContext = outline.getContext("2d", { alpha: true });
+
+  [texture, mask, patternedPage, outline].forEach((item) => {
+    item.width = width;
+    item.height = height;
+  });
+
+  drawCoverBottom(maskContext, laceImage, width, height);
+
+  textureContext.globalAlpha = .2;
+  textureContext.drawImage(snapshot, 0, 0, width, height);
+  textureContext.globalAlpha = 1;
+
+  patternedContext.drawImage(snapshot, 0, 0, width, height);
+  patternedContext.globalCompositeOperation = "destination-in";
+  patternedContext.drawImage(mask, 0, 0);
+  patternedContext.globalCompositeOperation = "source-over";
+  textureContext.globalAlpha = .8;
+  textureContext.drawImage(patternedPage, 0, 0);
+  textureContext.globalAlpha = 1;
+
+  patternedContext.clearRect(0, 0, width, height);
+  patternedContext.fillStyle = "rgba(255, 255, 255, .72)";
+  patternedContext.fillRect(0, 0, width, height);
+  patternedContext.globalCompositeOperation = "destination-in";
+  patternedContext.drawImage(mask, 0, 0);
+  patternedContext.globalCompositeOperation = "source-over";
+  textureContext.drawImage(patternedPage, 0, 0);
+
+  const outlineRadius = Math.max(1, Math.round(Math.max(width, height) * .0005));
+  for (let offsetX = -outlineRadius; offsetX <= outlineRadius; offsetX += outlineRadius) {
+    for (let offsetY = -outlineRadius; offsetY <= outlineRadius; offsetY += outlineRadius) {
+      if (offsetX === 0 && offsetY === 0) continue;
+      outlineContext.drawImage(mask, offsetX, offsetY);
+    }
+  }
+  outlineContext.globalCompositeOperation = "destination-out";
+  outlineContext.drawImage(mask, 0, 0);
+  outlineContext.globalCompositeOperation = "source-in";
+  outlineContext.fillStyle = "#6F6860";
+  outlineContext.fillRect(0, 0, width, height);
+  outlineContext.globalCompositeOperation = "source-over";
+  textureContext.drawImage(outline, 0, 0);
+
+  const verticalOpacity = textureContext.createLinearGradient(0, 0, 0, height);
+  verticalOpacity.addColorStop(0, "rgba(255,255,255,.5)");
+  verticalOpacity.addColorStop(.25, "rgba(255,255,255,.6)");
+  verticalOpacity.addColorStop(.5, "rgba(255,255,255,.7)");
+  verticalOpacity.addColorStop(.75, "rgba(255,255,255,.8)");
+  verticalOpacity.addColorStop(.9, "rgba(255,255,255,1)");
+  verticalOpacity.addColorStop(1, "rgba(255,255,255,1)");
+  textureContext.globalCompositeOperation = "destination-in";
+  textureContext.fillStyle = verticalOpacity;
+  textureContext.fillRect(0, 0, width, height);
+  textureContext.globalCompositeOperation = "source-over";
+
+  return texture;
+};
+
+const animateVeilCompositorFallback = async (canvas, snapshot, revealMask) => {
+  const laceImage = await loadLaceImage();
+  const context = canvas.getContext("2d", { alpha: true });
+
+  if (!context) {
+    throw new Error("Compositor fallback context is unavailable");
+  }
+
+  canvas.dataset.veilRenderer = "compositor";
   const width = canvas.width;
   const height = canvas.height;
-  const stripCount = window.innerHeight < 640 ? 12 : 16;
-  const stripHeight = Math.ceil(height / stripCount);
-  const overlap = Math.ceil(stripHeight * .34);
   const introDuration = 500;
-  const animationDuration = 1480;
-  const duration = introDuration + animationDuration;
-  const start = performance.now();
-  const lacePattern = createLacePattern(ctx, scale);
+  const motionDelay = 180;
+  const motionDuration = 4000;
+  const totalDuration = introDuration + motionDelay + motionDuration;
+  const texture = createVeilTexture2D(snapshot, laceImage, width, height);
 
-  const render = (now) => {
-    const elapsed = now - start;
-    const intro = smooth(elapsed / introDuration);
-    const progress = Math.min(1, Math.max(0, (elapsed - introDuration) / animationDuration));
-    if (revealMask) {
-      const revealY = window.innerHeight * (1 - smooth(progress));
-      revealMask.style.setProperty("--reveal-y", `${revealY}px`);
-      revealMask.style.clipPath = `polygon(0px 0px, 100vw 0px, 100vw ${revealY}px, 0px ${revealY}px)`;
-    }
-    ctx.clearRect(0, 0, width, height);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "medium";
+  context.drawImage(texture, 0, 0, width, height);
+  texture.width = 1;
+  texture.height = 1;
 
-    const shade = smooth(progress / .7) * .08;
-    ctx.fillStyle = `rgba(34, 32, 29, ${shade})`;
-    ctx.fillRect(0, 0, width, height);
+  canvas.style.transformOrigin = "50% 0%";
+  canvas.style.willChange = "transform, opacity";
+  const animation = canvas.animate([
+    { offset: 0, opacity: 0, transform: "perspective(1200px) translate3d(0, 0, 0) rotateX(0deg) scaleY(1)" },
+    { offset: introDuration / totalDuration, opacity: 1, transform: "perspective(1200px) translate3d(0, 0, 0) rotateX(0deg) scaleY(1)" },
+    { offset: (introDuration + motionDelay) / totalDuration, opacity: 1, transform: "perspective(1200px) translate3d(0, 0, 0) rotateX(0deg) scaleY(1)" },
+    { offset: .56, opacity: 1, transform: "perspective(1200px) translate3d(0, -14%, 0) rotateX(-12deg) scaleY(.9)" },
+    { offset: .84, opacity: .96, transform: "perspective(1200px) translate3d(0, -62%, 0) rotateX(-36deg) scaleY(.58)" },
+    { offset: 1, opacity: 0, transform: "perspective(1200px) translate3d(0, -106%, 0) rotateX(-68deg) scaleY(.18)" }
+  ], {
+    duration: totalDuration,
+    easing: "linear",
+    fill: "forwards"
+  });
 
-    for (let index = 0; index < stripCount; index += 1) {
-      const position = stripCount === 1 ? 1 : index / (stripCount - 1);
-      const sourceY = index * stripHeight;
-      const visibleHeight = Math.min(stripHeight + overlap, height - sourceY);
-      const releaseDelay = .5 * Math.pow(1 - position, 2.1);
-      const local = smooth((progress - releaseDelay) / (1 - releaseDelay));
-      const fold = Math.sin(local * Math.PI);
-      const late = smooth((local - .72) / .28);
-      const arc = Math.sin(local * Math.PI * .72);
-      const wave = Math.sin((progress * 4.8) + (position * 2.1)) * fold;
-      const lift = local * (height * (.38 + position * 1.18)) + arc * (height * (.06 + position * .12));
-      const perspectiveSquash = local * (.04 + position * .26) + late * .42;
-      const destHeight = visibleHeight * Math.max(.16, 1 - perspectiveSquash);
-      const destY = sourceY - lift - (late * height * .22) + (wave * 2.2 * scale);
-      const destX = wave * 2.8 * scale;
-      const destWidth = width * (1 + (fold * .008));
-      const opacity = 1 - (late * late);
-      const laceOpacity = smooth(local / .42) * (1 - smooth((local - .78) / .22)) * .56;
+  if (revealMask?.isConnected) {
+    const start = performance.now();
+    const updateReveal = (now) => {
+      if (!revealMask.isConnected) return;
+      const progress = Math.min(
+        1,
+        Math.max(0, (now - start - introDuration - motionDelay) / motionDuration)
+      );
+      paintRectangularRevealMask(
+        revealMask,
+        window.innerHeight * (1 - smooth(progress))
+      );
 
-      if (destHeight <= 1 || opacity <= .01) {
-        continue;
-      }
+      if (progress < 1) requestAnimationFrame(updateReveal);
+    };
+    requestAnimationFrame(updateReveal);
+  }
 
-      ctx.save();
-      ctx.globalAlpha = opacity * intro;
-      ctx.shadowColor = "rgba(34, 32, 29, .16)";
-      ctx.shadowBlur = 7 * scale * fold;
-      ctx.shadowOffsetY = 9 * scale * fold;
-      ctx.drawImage(snapshot, 0, sourceY, width, visibleHeight, destX, destY, destWidth, destHeight);
+  await animation.finished.catch(() => {});
+  canvas.style.willChange = "";
+};
 
-      const seamFade = Math.min(18 * scale, destHeight * .35);
-      if (seamFade > 1) {
-        const fade = ctx.createLinearGradient(0, destY, 0, destY + destHeight);
-        fade.addColorStop(0, "rgba(255, 255, 255, .12)");
-        fade.addColorStop(.22, "rgba(255, 255, 255, 0)");
-        fade.addColorStop(.78, "rgba(255, 255, 255, 0)");
-        fade.addColorStop(1, "rgba(255, 255, 255, .16)");
-        ctx.globalAlpha = opacity * fold * .42 * intro;
-        ctx.fillStyle = fade;
-        ctx.fillRect(destX, destY, destWidth, destHeight);
-      }
+const animateVeilCanvas2D = async (canvas, snapshot, revealMask) => {
+  const laceImage = await loadLaceImage();
+  canvas.dataset.veilRenderer = "2d";
 
-      if (laceOpacity > .01) {
-        ctx.globalAlpha = laceOpacity * opacity * intro;
-        ctx.fillStyle = "rgba(255, 255, 255, .34)";
-        ctx.fillRect(destX, destY, destWidth, destHeight);
-        ctx.fillStyle = lacePattern;
-        ctx.fillRect(destX, destY, destWidth, destHeight);
-      }
-
-      ctx.restore();
-    }
-
-    if (progress < 1) {
-      requestAnimationFrame(render);
+  return new Promise((resolve, reject) => {
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) {
+      reject(new Error("2D veil context is unavailable"));
       return;
     }
+    const scale = Number(canvas.dataset.scale) || 1;
+    const width = canvas.width;
+    const height = canvas.height;
+    const stripCount = window.innerHeight < 640 ? 20 : 24;
+    const stripHeight = Math.ceil(height / stripCount);
+    const overlap = Math.ceil(stripHeight * .3);
+    const introDuration = 500;
+    const motionDelay = 180;
+    const motionDuration = 4000;
+    const totalDuration = introDuration + motionDelay + motionDuration;
+    const start = performance.now();
+    const texture = createVeilTexture2D(snapshot, laceImage, width, height);
 
-    resolve();
-  };
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "medium";
 
-  requestAnimationFrame(render);
-});
+    const render = (now) => {
+      const elapsed = now - start;
+      const intro = smooth(elapsed / introDuration);
+      const progress = Math.min(1, Math.max(0, (elapsed - introDuration - motionDelay) / motionDuration));
+      let lowestEdge = 0;
+      ctx.clearRect(0, 0, width, height);
+
+      for (let index = 0; index < stripCount; index += 1) {
+        const position = stripCount === 1 ? 1 : index / (stripCount - 1);
+        const sourceY = index * stripHeight;
+        const visibleHeight = Math.min(stripHeight + overlap, height - sourceY);
+        const releaseDelay = .52 * Math.pow(1 - position, 2.35);
+        const local = smooth((progress - releaseDelay) / Math.max(.14, 1 - releaseDelay));
+        const fold = Math.sin(local * Math.PI);
+        const late = smooth((local - .78) / .22);
+        const arc = Math.sin(local * Math.PI * .72);
+        const wave = Math.sin((progress * 4.2) + (position * 2.25)) * fold;
+        const lift = local * (height * (.36 + position * 1.2)) + arc * (height * (.06 + position * .13));
+        const perspectiveSquash = local * (.035 + position * .24) + late * .42;
+        const destHeight = visibleHeight * Math.max(.15, 1 - perspectiveSquash);
+        const destY = sourceY - lift - (late * height * .24) + (wave * 2 * scale);
+        const destX = wave * 2.4 * scale;
+        const destWidth = width * (1 + (fold * .006));
+        const opacity = 1 - (late * late);
+
+        if (destHeight <= 1 || opacity <= .01) continue;
+
+        lowestEdge = Math.max(lowestEdge, destY + destHeight);
+        ctx.save();
+        ctx.globalAlpha = opacity * intro;
+        ctx.shadowColor = "rgba(34, 32, 29, .14)";
+        ctx.shadowBlur = 6 * scale * fold;
+        ctx.shadowOffsetY = 8 * scale * fold;
+        ctx.drawImage(texture, 0, sourceY, width, visibleHeight, destX, destY, destWidth, destHeight);
+        ctx.restore();
+      }
+
+      if (revealMask) {
+        const revealY = Math.max(0, Math.min(window.innerHeight, lowestEdge / scale));
+        paintRectangularRevealMask(revealMask, revealY);
+      }
+
+      if (elapsed < totalDuration) {
+        requestAnimationFrame(render);
+        return;
+      }
+
+      texture.width = 1;
+      texture.height = 1;
+      resolve();
+    };
+
+    requestAnimationFrame(render);
+  });
+};
 
 const finishNavigation = () => {
   body.classList.remove("is-page-turning", "has-visible-scrollbar");
   window.removeEventListener("wheel", keepScrollLocked);
   window.removeEventListener("touchmove", keepScrollLocked);
   isNavigating = false;
+  schedulePreparedViewportSnapshot(1800);
 };
 
 const keepScrollLocked = (event) => {
@@ -1533,7 +2208,7 @@ const navigateWithoutAnimation = async (url, shouldPush = false) => {
   setupPageInteractions(url.href);
 };
 
-const navigateWithPageTurn = async (url) => {
+const navigateWithPageTurn = async (url, preparedSnapshotPromise = null) => {
   isNavigating = true;
   lockedScrollY = window.scrollY;
   window.addEventListener("wheel", keepScrollLocked, { passive: false });
@@ -1552,14 +2227,15 @@ const navigateWithPageTurn = async (url) => {
     let snapshot = null;
 
     try {
-      snapshot = await captureCurrentViewport();
+      snapshot = await (preparedSnapshotPromise || captureCurrentViewport());
     } catch (error) {
+      console.warn("Veil viewport capture failed; continuing without a synthetic texture.", error);
       snapshot = null;
     }
 
-    const transitionLayer = snapshot ? createCanvasOverlay(snapshot) : createDomFallbackSheet();
+    const transitionLayer = snapshot ? createCanvasOverlay(snapshot) : null;
     const snapshotFadeLayer = snapshot ? createSnapshotFadeOverlay(snapshot) : null;
-    const revealMask = createPageRevealMask();
+    const revealMask = snapshot ? createPageRevealMask() : null;
     const nextDocument = await nextDocumentPromise;
 
     replacePageContent(nextDocument, url.href);
@@ -1567,23 +2243,31 @@ const navigateWithPageTurn = async (url) => {
     window.history.pushState({}, "", url.href);
     setupPageInteractions(url.href);
 
+    if (snapshotFadeLayer) {
+      window.setTimeout(() => {
+        snapshotFadeLayer.remove();
+        snapshotFadeLayer.width = 1;
+        snapshotFadeLayer.height = 1;
+      }, 560);
+    }
+
     try {
-      if (snapshot) {
+      if (snapshot && transitionLayer && revealMask) {
         await withTimeout(
           animateVeilCanvas(transitionLayer, snapshot, revealMask),
           7000,
           "veil animation timed out"
         );
-      } else {
-        await animateDomFallback(transitionLayer, revealMask);
       }
     } catch (error) {
       // The new page is already in place. A failed animation must never block navigation.
     }
 
-    revealMask.remove();
+    revealMask?.remove();
     snapshotFadeLayer?.remove();
-    transitionLayer.remove();
+    transitionLayer?.remove();
+    releaseSnapshotCanvas(transitionLayer);
+    releaseSnapshotCanvas(snapshot);
     finishNavigation();
   } catch (error) {
     document.querySelector(".page-reveal-mask")?.remove();
@@ -1599,9 +2283,31 @@ window.addEventListener("pageshow", () => {
   finishNavigation();
   setupPageInteractions();
   scheduleTransitionWarmup();
+  schedulePreparedViewportSnapshot(1600);
   body.classList.add("initial-enter", "page-ready");
   window.setTimeout(() => body.classList.remove("initial-enter"), 700);
 });
+
+window.addEventListener("scroll", () => {
+  if (!isAppleTouchDevice || isNavigating) return;
+  lastAppleInteractionAt = performance.now();
+  invalidatePreparedViewportSnapshot();
+  schedulePreparedViewportSnapshot(2200);
+}, { passive: true });
+
+window.addEventListener("resize", () => {
+  if (!isAppleTouchDevice || isNavigating) return;
+  lastAppleInteractionAt = performance.now();
+  invalidatePreparedViewportSnapshot();
+  schedulePreparedViewportSnapshot(1800);
+}, { passive: true });
+
+window.addEventListener("orientationchange", () => {
+  if (!isAppleTouchDevice || isNavigating) return;
+  lastAppleInteractionAt = performance.now();
+  invalidatePreparedViewportSnapshot();
+  schedulePreparedViewportSnapshot(2200);
+}, { passive: true });
 
 window.addEventListener("popstate", async () => {
   try {
@@ -1631,82 +2337,79 @@ const getInternalNavigationUrl = (link) => {
   return url;
 };
 
-document.addEventListener("touchstart", (event) => {
-  if (!isAppleTouchDevice || event.touches.length !== 1) {
-    return;
-  }
+const startInternalNavigation = (url, preparedSnapshotPromise = null) => {
+  if (isNavigating) return;
+  void navigateWithPageTurn(url, preparedSnapshotPromise);
+};
 
-  const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+const warmInternalLink = (link) => {
+  const url = getInternalNavigationUrl(link);
+  if (!url) return null;
+  loadDocument(url).catch(() => {});
+  return url;
+};
+
+document.addEventListener("pointerover", (event) => {
+  if (event.pointerType === "touch") return;
+  const target = event.target instanceof Element ? event.target : null;
   const link = target?.closest("a[href]");
-  const url = link ? getInternalNavigationUrl(link) : null;
-  const touch = event.touches[0];
+  if (link) warmInternalLink(link);
+}, { passive: true });
 
-  appleTouchNavigation = url ? {
-    identifier: touch.identifier,
-    startX: touch.clientX,
-    startY: touch.clientY,
-    moved: false,
-    url
-  } : null;
-}, { capture: true, passive: true });
+document.addEventListener("focusin", (event) => {
+  const target = event.target instanceof Element ? event.target : null;
+  const link = target?.closest("a[href]");
+  if (link) warmInternalLink(link);
+});
 
-document.addEventListener("touchmove", (event) => {
-  const navigation = appleTouchNavigation;
-
-  if (!navigation) {
+document.addEventListener("pointerdown", (event) => {
+  if (event.pointerType !== "touch" || event.isPrimary === false) return;
+  if (isAppleTouchDevice) {
+    lastAppleInteractionAt = performance.now();
+  }
+  const target = event.target instanceof Element ? event.target : null;
+  const link = target?.closest("a[href]");
+  const url = link ? warmInternalLink(link) : null;
+  if (!link || !url) {
+    touchNavigationCandidate = null;
     return;
   }
 
-  const touch = Array.from(event.touches).find((item) => item.identifier === navigation.identifier);
-
-  if (
-    !touch ||
-    Math.hypot(touch.clientX - navigation.startX, touch.clientY - navigation.startY) > 12
-  ) {
-    navigation.moved = true;
-  }
-}, { capture: true, passive: true });
-
-document.addEventListener("touchend", (event) => {
-  const touch = appleTouchNavigation;
-  appleTouchNavigation = null;
-  const changedTouch = touch
-    ? Array.from(event.changedTouches).find((item) => item.identifier === touch.identifier)
+  const preparedSnapshotPromise = isAppleTouchDevice && !reducedMotion
+    ? takePreparedViewportSnapshot()
     : null;
 
-  if (
-    !touch ||
-    !changedTouch ||
-    touch.moved ||
-    Math.hypot(changedTouch.clientX - touch.startX, changedTouch.clientY - touch.startY) > 12
-  ) {
-    return;
+  touchNavigationCandidate = {
+    link,
+    url,
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    snapshotPromise: reducedMotion
+      ? null
+      : isAppleTouchDevice
+        ? preparedSnapshotPromise
+        : captureCurrentViewport().catch(() => null)
+  };
+}, { passive: true });
+
+document.addEventListener("pointermove", (event) => {
+  const candidate = touchNavigationCandidate;
+  if (!candidate || candidate.pointerId !== event.pointerId) return;
+  if (Math.hypot(event.clientX - candidate.x, event.clientY - candidate.y) > 14) {
+    touchNavigationCandidate = null;
   }
+}, { passive: true });
 
-  event.preventDefault();
-  suppressNextClick = true;
-  window.setTimeout(() => {
-    suppressNextClick = false;
-  }, 700);
-
-  if (!isNavigating) {
-    void navigateWithPageTurn(touch.url);
-  }
-}, { capture: true, passive: false });
-
-document.addEventListener("touchcancel", () => {
-  appleTouchNavigation = null;
-}, { capture: true, passive: true });
+document.addEventListener("pointercancel", () => {
+  touchNavigationCandidate = null;
+}, { passive: true });
 
 document.addEventListener("click", (event) => {
-  if (suppressNextClick) {
-    event.preventDefault();
-    suppressNextClick = false;
-    return;
-  }
-
   const target = event.target instanceof Element ? event.target : event.target?.parentElement;
   const link = target?.closest("a[href]");
+  const candidate = touchNavigationCandidate;
+  touchNavigationCandidate = null;
 
   if (!link || event.defaultPrevented) {
     return;
@@ -1732,9 +2435,10 @@ document.addEventListener("click", (event) => {
 
   event.preventDefault();
 
-  if (isNavigating) {
-    return;
-  }
-
-  void navigateWithPageTurn(url);
+  const preparedSnapshotPromise = candidate?.link === link && candidate.url.href === url.href
+    ? candidate.snapshotPromise
+    : isAppleTouchDevice && !reducedMotion
+      ? takePreparedViewportSnapshot()
+      : null;
+  startInternalNavigation(url, preparedSnapshotPromise);
 });

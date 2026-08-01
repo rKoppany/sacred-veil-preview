@@ -5,15 +5,25 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-portfolio-thumbnails.mjs",
     "dev": "astro dev --host 127.0.0.1",
+    "prebuild": "node scripts/generate-portfolio-thumbnails.mjs",
     "build": "astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "start": "pnpm run dev"
+    "start": "pnpm run dev",
+    "diagnose:media": "node scripts/diagnostics/media-inspect.mjs",
+    "diagnose:devices": "node scripts/diagnostics/device-visual-check.mjs",
+    "diagnose:apple-regression": "node scripts/diagnostics/apple-regression-check.mjs",
+    "diagnose:apple-network": "node scripts/diagnostics/apple-network-check.mjs",
+    "playwright:install": "playwright install chromium webkit"
   },
   "dependencies": {
     "@astrojs/tailwind": "^5.1.5",
     "astro": "^4.16.18",
     "tailwindcss": "^3.4.17"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "sharp": "^0.35.3"
+  }
 }

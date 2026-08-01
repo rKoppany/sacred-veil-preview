@@ -1,6 +1,6 @@
 ---
 import { readFileSync, readdirSync } from "node:fs";
-import { extname, join } from "node:path";
+import { basename, extname, join } from "node:path";
 
 const portfolioDirectory = join(process.cwd(), "public", "images", "portfolio-full");
 const portfolioShuffleSeed = "sacred-veil-portfolio-order-2026-07-11";
@@ -91,7 +91,8 @@ const portfolioImages = buildMixedOrder(
         aspect: size.width / size.height,
         name: entry.name,
         orientation: size.width >= size.height ? "landscape" : "portrait" as "portrait" | "landscape",
-        src: `images/portfolio-full/${encodeURIComponent(entry.name)}`
+        src: `images/portfolio-full/${encodeURIComponent(entry.name)}`,
+        thumbnailSrc: `images/portfolio-thumbs/${encodeURIComponent(`${basename(entry.name, extname(entry.name))}.webp`)}`
       };
     })
 );
@@ -110,12 +111,12 @@ const portfolioImages = buildMixedOrder(
           aria-label={`Sacred Veil portfóliófotó ${index + 1} megnyitása`}
         >
           <img
-            src={image.src}
+            src={image.thumbnailSrc}
             alt={`Sacred Veil portfóliófotó ${index + 1}`}
             width={image.width}
             height={image.height}
-            loading={index < 18 ? "eager" : "lazy"}
-            fetchpriority={index < 8 ? "high" : "auto"}
+            loading="eager"
+            fetchpriority={index < 2 ? "high" : "auto"}
             decoding="async"
             data-portfolio-image
           />
@@ -156,6 +157,8 @@ const portfolioImages = buildMixedOrder(
 </div>
 
 <script>
+  const portfolioRuntimeOwnedByGlobalScript = true;
+  if (!portfolioRuntimeOwnedByGlobalScript) {
   const modal = document.querySelector("[data-lightbox-modal]");
   const modalImage = document.querySelector("[data-lightbox-image]");
   const lightboxStage = document.querySelector(".lightbox-stage");
@@ -470,6 +473,7 @@ const portfolioImages = buildMixedOrder(
       });
     }
   }
+  }
 </script>
 
 <style>
@@ -538,6 +542,9 @@ const portfolioImages = buildMixedOrder(
       opacity 1500ms ease,
       transform 1200ms cubic-bezier(0.16, 0.84, 0.22, 1),
       box-shadow 220ms ease;
+  }
+
+  .portfolio-wall.is-enhanced .portfolio-card.is-reveal-animating {
     will-change: opacity, transform;
   }
 
