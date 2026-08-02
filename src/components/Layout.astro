@@ -6,10 +6,20 @@ import "../styles/global.css";
 interface Props {
   title: string;
   description: string;
+  preloadImages?: Array<string | { href: string; srcset?: string; sizes?: string }>;
 }
 
-const { title, description } = Astro.props;
+const { title, description, preloadImages = [] } = Astro.props;
 const baseUrl = import.meta.env.BASE_URL;
+const withBaseUrl = (path: string) => `${baseUrl}${path}`;
+const withBaseUrlSrcset = (srcset: string) =>
+  srcset
+    .split(",")
+    .map((candidate) => {
+      const [path, descriptor] = candidate.trim().split(/\s+/, 2);
+      return `${withBaseUrl(path)} ${descriptor ?? ""}`.trim();
+    })
+    .join(", ");
 ---
 
 <!doctype html>
@@ -19,10 +29,21 @@ const baseUrl = import.meta.env.BASE_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#fbf7ef" />
+    <link rel="preload" as="image" href={`${baseUrl}images/brand/sacred-veil-logo-transparent-192.webp?v=20260802`} />
+    {preloadImages.map((image) => (
+      typeof image === "string" ? (
+        <link rel="preload" as="image" href={withBaseUrl(image)} />
+      ) : (
+        <link
+          rel="preload"
+          as="image"
+          href={withBaseUrl(image.href)}
+          imagesrcset={image.srcset ? withBaseUrlSrcset(image.srcset) : undefined}
+          imagesizes={image.sizes}
+        />
+      )
+    ))}
     <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Great+Vibes&family=Inter:wght@400;500;600;700&family=Parisienne&display=swap" rel="stylesheet" />
   </head>
   <body>
     <Header />
@@ -30,7 +51,6 @@ const baseUrl = import.meta.env.BASE_URL;
       <slot />
     </main>
     <Footer />
-    <script is:inline src={`${baseUrl}js/html2canvas.min.js?v=1`} defer></script>
-    <script is:inline src={`${baseUrl}js/veil-transition.js?v=22`} defer></script>
+    <script is:inline src={`${baseUrl}js/veil-transition.min.js?v=24`} defer></script>
   </body>
 </html>

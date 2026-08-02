@@ -800,6 +800,26 @@ const loadHtml2Canvas = () => {
   return html2CanvasPromise;
 };
 
+const getResponsiveLacePath = (baseName) => {
+  if (isAppleTouchDevice) {
+    return baseName === "packed"
+      ? "lace-mask-apple-packed.png?v=4"
+      : "lace-mask-apple.png?v=4";
+  }
+
+  const desiredPixels = Math.max(window.innerWidth, window.innerHeight) * Math.min(window.devicePixelRatio || 1, 2);
+
+  if (baseName === "packed") {
+    if (desiredPixels <= 1700) return "lace-mask-packed-1800.webp?v=1";
+    if (desiredPixels <= 2300) return "lace-mask-packed-2400.webp?v=1";
+    return "lace-mask-packed-3000.webp?v=1";
+  }
+
+  return desiredPixels <= 1800
+    ? "lace-mask-1800.webp?v=1"
+    : "lace-mask-2400.webp?v=1";
+};
+
 const loadLaceImage = () => {
   if (laceImagePromise) {
     return laceImagePromise;
@@ -811,10 +831,7 @@ const loadLaceImage = () => {
     image.fetchPriority = "high";
     image.onload = () => resolve(image);
     image.onerror = reject;
-    image.src = new URL(
-      isAppleTouchDevice ? "lace-mask-apple.png?v=3" : "lace-mask.png?v=3",
-      document.baseURI
-    ).href;
+    image.src = new URL(getResponsiveLacePath("mask"), document.baseURI).href;
   });
 
   return laceImagePromise;
@@ -831,10 +848,7 @@ const loadPackedLaceImage = () => {
     image.fetchPriority = "high";
     image.onload = () => resolve(image);
     image.onerror = reject;
-    image.src = new URL(
-      isAppleTouchDevice ? "lace-mask-apple-packed.png?v=3" : "lace-mask-packed.webp?v=1",
-      document.baseURI
-    ).href;
+    image.src = new URL(getResponsiveLacePath("packed"), document.baseURI).href;
   });
 
   return packedLaceImagePromise;
@@ -897,23 +911,7 @@ const loadPackedLaceAnalysis = () => {
 };
 
 const scheduleTransitionWarmup = () => {
-  const warmCaptureLibrary = () => loadHtml2Canvas().catch(() => {});
-  const warmLace = () => loadPackedLaceAnalysis().catch(() => {});
-
-  if (isAppleTouchDevice) {
-    window.setTimeout(warmLace, 0);
-    window.setTimeout(warmCaptureLibrary, 120);
-    return;
-  }
-
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(warmCaptureLibrary, { timeout: 1200 });
-    window.requestIdleCallback(warmLace, { timeout: 1600 });
-    return;
-  }
-
-  window.setTimeout(warmCaptureLibrary, 150);
-  window.setTimeout(warmLace, 350);
+  // Keep the initial page load quiet. Transition assets are warmed from real link intent below.
 };
 
 const replacePageContent = (nextDocument, pageUrl = window.location.href) => {
@@ -2346,6 +2344,10 @@ const warmInternalLink = (link) => {
   const url = getInternalNavigationUrl(link);
   if (!url) return null;
   loadDocument(url).catch(() => {});
+  if (!isAppleTouchDevice && !reducedMotion) {
+    loadHtml2Canvas().catch(() => {});
+    loadPackedLaceAnalysis().catch(() => {});
+  }
   return url;
 };
 
