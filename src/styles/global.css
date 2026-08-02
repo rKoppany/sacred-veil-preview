@@ -994,8 +994,12 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
     max-width: 100%;
   }
 
-  .about-principles-grid {
+  .about-profile-copy-grid {
     align-items: start;
+  }
+
+  .about-side-copy {
+    background: transparent;
   }
 
   .about-principles-card {
@@ -1016,6 +1020,10 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
   .site-nav a,
   .site-nav-cta {
     white-space: nowrap;
+  }
+
+  .site-brand-name {
+    color: var(--taupe);
   }
 
   .container.grid > .eyebrow:first-child,
@@ -1040,14 +1048,13 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
       grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     }
 
-    .about-principles-grid {
+    .about-profile-copy-grid {
       align-items: stretch;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .about-profile-frame,
-    .about-profile-frame img,
-    .about-principles-card {
+    .about-profile-frame img {
       height: 100%;
     }
 
@@ -1055,18 +1062,46 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
       object-fit: cover;
     }
 
-    .about-principles-card {
-      grid-template-rows: auto minmax(0, 1fr);
+    .about-side-copy {
+      align-self: start;
+      align-content: center;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
     }
 
-    .about-principles-list {
-      align-content: stretch;
-      gap: 0;
-      grid-template-rows: repeat(3, minmax(0, 1fr));
+    .about-principles-wide .about-principles-card {
+      align-items: start;
+      gap: clamp(1.5rem, 4vw, 4rem);
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      padding: clamp(2rem, 4vw, 3.5rem);
     }
 
-    .about-principles-list li {
-      align-self: center;
+    .about-principles-wide .about-principles-list {
+      gap: clamp(0.9rem, 1.4vw, 1.25rem);
+      margin-top: 0;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .about-principles-wide .about-principles-card {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      padding: clamp(2.75rem, 4.2vw, 4.5rem);
+    }
+
+    .about-principles-wide .about-principles-card h2 {
+      font-size: clamp(2.75rem, 4vw, 4.75rem);
+      line-height: 0.95;
+    }
+
+    .about-principles-wide .about-principles-list {
+      gap: clamp(1rem, 1.4vw, 1.5rem);
+      margin-top: 0;
+    }
+
+    .about-principles-wide .about-principles-list li {
+      font-size: clamp(1rem, 1.1vw, 1.1rem);
+      line-height: 1.55;
     }
   }
 
@@ -1252,8 +1287,12 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
     stroke-width: 14;
   }
 
+  .lightbox-x-outline {
+    stroke-width: 46;
+  }
+
   .lightbox-x-core {
-    stroke-width: 18;
+    stroke-width: 34;
   }
 
   .lightbox-close-position {
