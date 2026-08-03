@@ -1006,6 +1006,11 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
     display: grid;
   }
 
+  .about-principles-card h2 {
+    max-height: var(--about-principles-list-height, none);
+    overflow: hidden;
+  }
+
   .site-header-inner {
     gap: clamp(0.75rem, 2vw, 2rem);
   }

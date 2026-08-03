@@ -22,6 +22,8 @@ let preparedViewportCaptureClaimed = false;
 let preparedViewportTimer = 0;
 let preparedViewportVersion = 0;
 let lastAppleInteractionAt = performance.now();
+let principlesTitleResizeObserver;
+let principlesTitleResizeListenerBound = false;
 
 const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
   let settled = false;
@@ -753,11 +755,44 @@ const setupLayoutMotion = () => {
   window.addEventListener("orientationchange", handleLayoutMotionOrientationChange, { passive: true });
 };
 
+const syncAboutPrinciplesTitleHeight = () => {
+  document.querySelectorAll(".about-principles-card").forEach((card) => {
+    const list = card.querySelector(".about-principles-list");
+
+    if (!list) {
+      card.style.removeProperty("--about-principles-list-height");
+      return;
+    }
+
+    card.style.setProperty("--about-principles-list-height", `${list.getBoundingClientRect().height}px`);
+  });
+};
+
+const setupAboutPrinciplesTitleHeight = () => {
+  syncAboutPrinciplesTitleHeight();
+  document.fonts?.ready.then(syncAboutPrinciplesTitleHeight);
+
+  if ("ResizeObserver" in window) {
+    principlesTitleResizeObserver?.disconnect();
+    principlesTitleResizeObserver = new ResizeObserver(syncAboutPrinciplesTitleHeight);
+    document.querySelectorAll(".about-principles-list").forEach((list) => {
+      principlesTitleResizeObserver.observe(list);
+    });
+  }
+
+  if (!principlesTitleResizeListenerBound) {
+    principlesTitleResizeListenerBound = true;
+    window.addEventListener("resize", syncAboutPrinciplesTitleHeight, { passive: true });
+    window.addEventListener("orientationchange", syncAboutPrinciplesTitleHeight, { passive: true });
+  }
+};
+
 const setupPageInteractions = (pageUrl = window.location.href) => {
   setupNavigationToggle();
   prefillContactForm(pageUrl);
   setupContactForm();
   setupPortfolioGallery();
+  setupAboutPrinciplesTitleHeight();
   setupLayoutMotion();
 };
 
