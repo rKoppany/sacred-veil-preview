@@ -760,14 +760,73 @@ const setupLayoutMotion = () => {
 
 const syncAboutPrinciplesTitleHeight = () => {
   document.querySelectorAll(".about-principles-card").forEach((card) => {
+    const title = card.querySelector("h2");
     const list = card.querySelector(".about-principles-list");
 
-    if (!list) {
+    if (!title || !list) {
       card.style.removeProperty("--about-principles-list-height");
+      card.style.removeProperty("--about-principles-title-font-size");
       return;
     }
 
-    card.style.setProperty("--about-principles-list-height", `${list.getBoundingClientRect().height}px`);
+    card.style.removeProperty("--about-principles-title-font-size");
+
+    const listHeight = list.getBoundingClientRect().height;
+    card.style.setProperty("--about-principles-list-height", `${listHeight}px`);
+
+    const titleStyles = window.getComputedStyle(title);
+    const baseFontSize = Number.parseFloat(titleStyles.fontSize);
+    const minFontSize = Math.max(12, baseFontSize * 0.48);
+    const wordsFit = () => {
+      const titleWidth = title.clientWidth;
+      const words = (title.textContent || "").trim().split(/\s+/).filter(Boolean);
+
+      if (titleWidth <= 0 || words.length === 0) {
+        return true;
+      }
+
+      const styles = window.getComputedStyle(title);
+      const probe = document.createElement("span");
+      probe.style.font = styles.font;
+      probe.style.letterSpacing = styles.letterSpacing;
+      probe.style.position = "absolute";
+      probe.style.visibility = "hidden";
+      probe.style.whiteSpace = "nowrap";
+      document.body.appendChild(probe);
+
+      const fits = words.every((word) => {
+        probe.textContent = word;
+        return probe.getBoundingClientRect().width <= titleWidth + 0.5;
+      });
+
+      probe.remove();
+      return fits;
+    };
+    const fits = () =>
+      title.getBoundingClientRect().height <= listHeight + 0.5 &&
+      wordsFit();
+
+    if (!Number.isFinite(baseFontSize) || fits()) {
+      return;
+    }
+
+    let low = minFontSize;
+    let high = baseFontSize;
+    let best = minFontSize;
+
+    for (let index = 0; index < 16; index += 1) {
+      const mid = (low + high) / 2;
+      card.style.setProperty("--about-principles-title-font-size", `${mid}px`);
+
+      if (fits()) {
+        best = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    card.style.setProperty("--about-principles-title-font-size", `${best}px`);
   });
 };
 
