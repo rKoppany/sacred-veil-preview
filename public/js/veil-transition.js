@@ -24,6 +24,9 @@ let preparedViewportVersion = 0;
 let lastAppleInteractionAt = performance.now();
 let principlesTitleResizeObserver;
 let principlesTitleResizeListenerBound = false;
+let aboutProfileTextFlowResizeObserver;
+let aboutProfileTextFlowListenerBound = false;
+let aboutProfileTextFlowSyncing = false;
 
 const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
   let settled = false;
@@ -787,12 +790,84 @@ const setupAboutPrinciplesTitleHeight = () => {
   }
 };
 
+const syncAboutProfileTextFlow = () => {
+  if (aboutProfileTextFlowSyncing) return;
+  aboutProfileTextFlowSyncing = true;
+
+  document.querySelectorAll(".about-profile-copy-grid").forEach((grid) => {
+    const frame = grid.querySelector(".about-profile-frame");
+    const image = frame?.querySelector("img");
+    const sideCopy = grid.querySelector(".about-side-copy");
+    const underCopy = grid.querySelector(".about-under-profile-copy");
+
+    if (!frame || !image || !sideCopy || !underCopy) {
+      return;
+    }
+
+    sideCopy.querySelectorAll("p").forEach((paragraph) => {
+      paragraph.dataset.profileFlowCandidate = "true";
+    });
+
+    Array.from(underCopy.querySelectorAll("[data-profile-flow-dynamic='true']")).forEach((paragraph) => {
+      sideCopy.appendChild(paragraph);
+    });
+
+    const frameRect = frame.getBoundingClientRect();
+    const sideRect = sideCopy.getBoundingClientRect();
+    const isSideBySide = sideRect.left >= frameRect.right - 2;
+
+    if (!isSideBySide) {
+      return;
+    }
+
+    let lastParagraph = sideCopy.querySelector("p:last-child");
+
+    while (lastParagraph instanceof HTMLElement && lastParagraph.getBoundingClientRect().bottom > frameRect.bottom + 0.5) {
+      lastParagraph.dataset.profileFlowDynamic = "true";
+      underCopy.prepend(lastParagraph);
+      lastParagraph = sideCopy.querySelector("p:last-child");
+    }
+  });
+
+  aboutProfileTextFlowSyncing = false;
+};
+
+const scheduleAboutProfileTextFlow = () => {
+  window.requestAnimationFrame(syncAboutProfileTextFlow);
+};
+
+const setupAboutProfileTextFlow = () => {
+  syncAboutProfileTextFlow();
+  document.fonts?.ready.then(scheduleAboutProfileTextFlow);
+
+  if ("ResizeObserver" in window) {
+    aboutProfileTextFlowResizeObserver?.disconnect();
+    aboutProfileTextFlowResizeObserver = new ResizeObserver(scheduleAboutProfileTextFlow);
+    document.querySelectorAll(".about-profile-copy-grid, .about-profile-frame, .about-side-copy, .about-under-profile-copy").forEach((element) => {
+      aboutProfileTextFlowResizeObserver.observe(element);
+    });
+  }
+
+  document.querySelectorAll(".about-profile-frame img").forEach((image) => {
+    if (image instanceof HTMLImageElement && !image.complete) {
+      image.addEventListener("load", scheduleAboutProfileTextFlow, { once: true });
+    }
+  });
+
+  if (!aboutProfileTextFlowListenerBound) {
+    aboutProfileTextFlowListenerBound = true;
+    window.addEventListener("resize", scheduleAboutProfileTextFlow, { passive: true });
+    window.addEventListener("orientationchange", scheduleAboutProfileTextFlow, { passive: true });
+  }
+};
+
 const setupPageInteractions = (pageUrl = window.location.href) => {
   setupNavigationToggle();
   prefillContactForm(pageUrl);
   setupContactForm();
   setupPortfolioGallery();
   setupAboutPrinciplesTitleHeight();
+  setupAboutProfileTextFlow();
   setupLayoutMotion();
 };
 

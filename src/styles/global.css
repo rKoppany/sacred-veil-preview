@@ -1002,6 +1002,14 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
     background: transparent;
   }
 
+  .about-under-profile-copy {
+    grid-column: 1 / -1;
+  }
+
+  .about-intro-section {
+    padding-bottom: clamp(2rem, 5vw, 4.5rem);
+  }
+
   .about-principles-card {
     display: grid;
   }
@@ -1054,25 +1062,18 @@ body.is-apple-touch .portfolio-wall.is-enhanced.is-instant-layout .portfolio-car
     }
 
     .about-profile-copy-grid {
-      align-items: stretch;
+      align-items: start;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
-    .about-profile-frame,
     .about-profile-frame img {
-      height: 100%;
-    }
-
-    .about-profile-frame img {
-      object-fit: cover;
+      height: auto;
+      object-fit: contain;
     }
 
     .about-side-copy {
       align-self: start;
-      align-content: center;
-      height: 100%;
-      max-height: 100%;
-      overflow: hidden;
+      align-content: start;
     }
 
     .about-principles-wide .about-principles-card {
