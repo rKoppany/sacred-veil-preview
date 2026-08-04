@@ -23,6 +23,7 @@ let preparedViewportCaptureClaimed = false;
 let preparedViewportTimer = 0;
 let preparedViewportVersion = 0;
 let lastAppleInteractionAt = performance.now();
+let appleNavigationOverlay = null;
 let principlesTitleResizeObserver;
 let principlesTitleResizeListenerBound = false;
 let aboutProfileTextFlowResizeObserver;
@@ -258,6 +259,46 @@ const setupPortfolioGallery = () => {
     currentIndex = (index + galleryButtons.length) % galleryButtons.length;
     modalImage.src = galleryButtons[currentIndex].getAttribute("data-lightbox") || "";
   };
+
+  const openLightboxInstantly = (index) => {
+    showImage(index);
+    modal?.classList.remove("hidden");
+    modal?.classList.add("block", "is-open");
+    modal?.classList.remove("is-closing");
+    modal?.setAttribute("aria-hidden", "false");
+    document.documentElement.style.overflow = "hidden";
+  };
+
+  const closeLightboxInstantly = () => {
+    modal?.classList.remove("is-open", "is-closing", "block");
+    modal?.classList.add("hidden");
+    modal?.setAttribute("aria-hidden", "true");
+    document.documentElement.style.overflow = "";
+    if (modalImage instanceof HTMLImageElement) {
+      modalImage.removeAttribute("src");
+      modalImage.style.opacity = "";
+      modalImage.style.transform = "";
+    }
+  };
+
+  if (isAppleTouchDevice) {
+    masonryWall.dataset.portfolioBound = "true";
+    galleryButtons.forEach((button, index) => {
+      button.addEventListener("click", () => openLightboxInstantly(index));
+    });
+    closeButton?.addEventListener("click", closeLightboxInstantly);
+    previousButton?.addEventListener("click", () => openLightboxInstantly(currentIndex - 1));
+    nextButton?.addEventListener("click", () => openLightboxInstantly(currentIndex + 1));
+    modal?.addEventListener("click", (event) => {
+      if (event.target === modal) closeLightboxInstantly();
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeLightboxInstantly();
+      if (event.key === "ArrowLeft") openLightboxInstantly(currentIndex - 1);
+      if (event.key === "ArrowRight") openLightboxInstantly(currentIndex + 1);
+    });
+    return;
+  }
 
   const close = async () => {
     if (isLightboxAnimating) return;
@@ -2447,7 +2488,34 @@ const navigateWithPageTurn = async (url, preparedSnapshotPromise = null) => {
   }
 };
 
+const clearAppleNavigationOverlay = () => {
+  appleNavigationOverlay?.remove();
+  appleNavigationOverlay = null;
+  body.classList.remove("is-ios-native-page-turning");
+};
+
+const startAppleNativeNavigation = (url) => {
+  if (isNavigating) return;
+
+  isNavigating = true;
+  clearAppleNavigationOverlay();
+  body.classList.add("is-ios-native-page-turning");
+  appleNavigationOverlay = document.createElement("div");
+  appleNavigationOverlay.className = "ios-veil-transition";
+  appleNavigationOverlay.setAttribute("aria-hidden", "true");
+  document.body.appendChild(appleNavigationOverlay);
+
+  window.requestAnimationFrame(() => {
+    appleNavigationOverlay?.classList.add("is-active");
+  });
+
+  window.setTimeout(() => {
+    window.location.href = url.href;
+  }, reducedMotion ? 1 : 360);
+};
+
 window.addEventListener("pageshow", () => {
+  clearAppleNavigationOverlay();
   finishNavigation();
   setupPageInteractions();
   scheduleTransitionWarmup();
@@ -2603,6 +2671,8 @@ document.addEventListener("click", (event) => {
   }
 
   if (isAppleTouchDevice) {
+    event.preventDefault();
+    startAppleNativeNavigation(url);
     return;
   }
 
