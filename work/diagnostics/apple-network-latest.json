@@ -1,162 +1,169 @@
 [
   {
     "profile": "iPhone 11",
-    "navigationMs": 144,
+    "navigationMs": 272,
     "state": {
       "bound": "true",
       "cards": 66,
       "columns": "1",
       "enhanced": true,
-      "sourced": 5,
-      "loaded": 3,
+      "sourced": 66,
+      "loaded": 6,
       "visible": 1,
       "visibleLoaded": 1
     },
     "requestCounts": {
       "html": 2,
-      "thumbnails": 3,
+      "thumbnails": 6,
       "fullImages": 0,
-      "appleMask": 1,
-      "html2canvas": 1
+      "appleMask": 0,
+      "html2canvas": 0
     },
     "criticalRequests": [
       {
         "path": "/index.html",
         "resourceType": "document",
-        "startedMs": 21,
+        "startedMs": 7,
         "status": 200,
-        "responseMs": 29
-      },
-      {
-        "path": "/js/html2canvas.min.js",
-        "resourceType": "script",
-        "startedMs": 40,
-        "status": 200,
-        "responseMs": 227
-      },
-      {
-        "path": "/lace-mask-apple-packed.png",
-        "resourceType": "image",
-        "startedMs": 990,
-        "status": 200,
-        "responseMs": 1178
+        "responseMs": 18
       },
       {
         "path": "/portfolio.html",
-        "resourceType": "fetch",
-        "startedMs": 1648,
+        "resourceType": "document",
+        "startedMs": 1366,
         "status": 200,
-        "responseMs": 1653
+        "responseMs": 1368
       },
       {
         "path": "/images/portfolio-thumbs/_NZ93773.webp",
         "resourceType": "image",
-        "startedMs": 1660,
+        "startedMs": 1377,
         "status": 200,
-        "responseMs": 1812
+        "responseMs": 1388
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95528.webp",
         "resourceType": "image",
-        "startedMs": 1660,
+        "startedMs": 1378,
         "status": 200,
-        "responseMs": 1810
+        "responseMs": 1389
       },
       {
         "path": "/images/portfolio-thumbs/IMG_9747.webp",
         "resourceType": "image",
-        "startedMs": 2210,
+        "startedMs": 1378,
         "status": 200,
-        "responseMs": 2265
+        "responseMs": 1406
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95452.webp",
+        "resourceType": "image",
+        "startedMs": 1378,
+        "status": 200,
+        "responseMs": 1406
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9901-2.webp",
+        "resourceType": "image",
+        "startedMs": 1487,
+        "status": 200,
+        "responseMs": 1571
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ94144-2.webp",
+        "resourceType": "image",
+        "startedMs": 1488,
+        "status": 200,
+        "responseMs": 1570
       }
     ],
     "failures": []
   },
   {
     "profile": "iPhone 14",
-    "navigationMs": 522,
+    "navigationMs": 467,
     "state": {
       "bound": "true",
       "cards": 66,
       "columns": "1",
       "enhanced": true,
-      "sourced": 4,
-      "loaded": 2,
+      "sourced": 66,
+      "loaded": 4,
       "visible": 1,
       "visibleLoaded": 1
     },
     "requestCounts": {
       "html": 2,
-      "thumbnails": 2,
+      "thumbnails": 4,
       "fullImages": 0,
-      "appleMask": 1,
-      "html2canvas": 1
+      "appleMask": 0,
+      "html2canvas": 0
     },
     "criticalRequests": [
       {
         "path": "/index.html",
         "resourceType": "document",
-        "startedMs": 10,
+        "startedMs": 9,
         "status": 200,
-        "responseMs": 16
-      },
-      {
-        "path": "/js/html2canvas.min.js",
-        "resourceType": "script",
-        "startedMs": 25,
-        "status": 200,
-        "responseMs": 218
-      },
-      {
-        "path": "/lace-mask-apple-packed.png",
-        "resourceType": "image",
-        "startedMs": 951,
-        "status": 200,
-        "responseMs": 1153
+        "responseMs": 15
       },
       {
         "path": "/portfolio.html",
-        "resourceType": "fetch",
-        "startedMs": 1975,
+        "resourceType": "document",
+        "startedMs": 1435,
         "status": 200,
-        "responseMs": 1981
+        "responseMs": 1437
       },
       {
         "path": "/images/portfolio-thumbs/_NZ93773.webp",
         "resourceType": "image",
-        "startedMs": 1987,
+        "startedMs": 1446,
         "status": 200,
-        "responseMs": 2169
+        "responseMs": 1456
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95528.webp",
         "resourceType": "image",
-        "startedMs": 1987,
+        "startedMs": 1448,
         "status": 200,
-        "responseMs": 2168
+        "responseMs": 1457
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9747.webp",
+        "resourceType": "image",
+        "startedMs": 1448,
+        "status": 200,
+        "responseMs": 1468
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95452.webp",
+        "resourceType": "image",
+        "startedMs": 1448,
+        "status": 200,
+        "responseMs": 1469
       }
     ],
     "failures": []
   },
   {
     "profile": "iPad (gen 6)",
-    "navigationMs": 562,
+    "navigationMs": 266,
     "state": {
       "bound": "true",
       "cards": 66,
       "columns": "3",
       "enhanced": true,
-      "sourced": 25,
-      "loaded": 21,
+      "sourced": 66,
+      "loaded": 66,
       "visible": 8,
       "visibleLoaded": 8
     },
     "requestCounts": {
       "html": 2,
-      "thumbnails": 21,
+      "thumbnails": 66,
       "fullImages": 0,
-      "appleMask": 1,
-      "html2canvas": 1
+      "appleMask": 0,
+      "html2canvas": 0
     },
     "criticalRequests": [
       {
@@ -164,175 +171,476 @@
         "resourceType": "document",
         "startedMs": 14,
         "status": 200,
-        "responseMs": 20
-      },
-      {
-        "path": "/js/html2canvas.min.js",
-        "resourceType": "script",
-        "startedMs": 28,
-        "status": 200,
-        "responseMs": 218
-      },
-      {
-        "path": "/lace-mask-apple-packed.png",
-        "resourceType": "image",
-        "startedMs": 995,
-        "status": 200,
-        "responseMs": 1212
+        "responseMs": 28
       },
       {
         "path": "/portfolio.html",
-        "resourceType": "fetch",
-        "startedMs": 1707,
+        "resourceType": "document",
+        "startedMs": 1178,
         "status": 200,
-        "responseMs": 1713
+        "responseMs": 1187
       },
       {
         "path": "/images/portfolio-thumbs/_NZ93773.webp",
         "resourceType": "image",
-        "startedMs": 1718,
+        "startedMs": 1200,
         "status": 200,
-        "responseMs": 1876
+        "responseMs": 1225
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95528.webp",
         "resourceType": "image",
-        "startedMs": 1718,
+        "startedMs": 1200,
         "status": 200,
-        "responseMs": 1875
+        "responseMs": 1219
       },
       {
         "path": "/images/portfolio-thumbs/IMG_9747.webp",
         "resourceType": "image",
-        "startedMs": 1890,
+        "startedMs": 1200,
         "status": 200,
-        "responseMs": 2387
+        "responseMs": 1236
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95452.webp",
         "resourceType": "image",
-        "startedMs": 1891,
+        "startedMs": 1201,
         "status": 200,
-        "responseMs": 2388
+        "responseMs": 1237
       },
       {
         "path": "/images/portfolio-thumbs/IMG_9901-2.webp",
         "resourceType": "image",
-        "startedMs": 1891,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2389
+        "responseMs": 1535
       },
       {
         "path": "/images/portfolio-thumbs/_NZ94144-2.webp",
         "resourceType": "image",
-        "startedMs": 1891,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2390
+        "responseMs": 1533
       },
       {
         "path": "/images/portfolio-thumbs/IMG_0315.webp",
         "resourceType": "image",
-        "startedMs": 2471,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2634
+        "responseMs": 1540
       },
       {
         "path": "/images/portfolio-thumbs/_NZ98374.webp",
         "resourceType": "image",
-        "startedMs": 2471,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2633
+        "responseMs": 1537
       },
       {
         "path": "/images/portfolio-thumbs/_NZ98375.webp",
         "resourceType": "image",
-        "startedMs": 2471,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2633
+        "responseMs": 1545
       },
       {
         "path": "/images/portfolio-thumbs/IMG_1011.webp",
         "resourceType": "image",
-        "startedMs": 2471,
+        "startedMs": 1346,
         "status": 200,
-        "responseMs": 2633
+        "responseMs": 1550
       },
       {
         "path": "/images/portfolio-thumbs/IMG_1147.webp",
         "resourceType": "image",
-        "startedMs": 2675,
+        "startedMs": 1347,
         "status": 200,
-        "responseMs": 2805
+        "responseMs": 1554
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95981.webp",
         "resourceType": "image",
-        "startedMs": 2675,
+        "startedMs": 1347,
         "status": 200,
-        "responseMs": 2804
+        "responseMs": 1554
       },
       {
         "path": "/images/portfolio-thumbs/Autos2.webp",
         "resourceType": "image",
-        "startedMs": 2675,
+        "startedMs": 1347,
         "status": 200,
-        "responseMs": 2807
+        "responseMs": 1554
       },
       {
         "path": "/images/portfolio-thumbs/IMG_9796.webp",
         "resourceType": "image",
-        "startedMs": 2675,
+        "startedMs": 1347,
         "status": 200,
-        "responseMs": 2806
+        "responseMs": 1554
       },
       {
         "path": "/images/portfolio-thumbs/IMG_2290.webp",
         "resourceType": "image",
-        "startedMs": 2853,
+        "startedMs": 1347,
         "status": 200,
-        "responseMs": 3002
+        "responseMs": 1554
       },
       {
         "path": "/images/portfolio-thumbs/_NZ95936.webp",
         "resourceType": "image",
-        "startedMs": 2853,
+        "startedMs": 1350,
         "status": 200,
-        "responseMs": 3001
+        "responseMs": 1556
       },
       {
         "path": "/images/portfolio-thumbs/IMG_3189.webp",
         "resourceType": "image",
-        "startedMs": 2853,
+        "startedMs": 1351,
         "status": 200,
-        "responseMs": 3005
+        "responseMs": 1556
       },
       {
         "path": "/images/portfolio-thumbs/IMG_3309-2.webp",
         "resourceType": "image",
-        "startedMs": 2855,
+        "startedMs": 1351,
         "status": 200,
-        "responseMs": 3001
+        "responseMs": 1556
       },
       {
         "path": "/images/portfolio-thumbs/IMG_1052-2.webp",
         "resourceType": "image",
-        "startedMs": 3064,
+        "startedMs": 1351,
         "status": 200,
-        "responseMs": 3246
+        "responseMs": 1558
       },
       {
         "path": "/images/portfolio-thumbs/IMG_9708.webp",
         "resourceType": "image",
-        "startedMs": 3064,
+        "startedMs": 1351,
         "status": 200,
-        "responseMs": 3247
+        "responseMs": 1556
       },
       {
         "path": "/images/portfolio-thumbs/IMG_1637.webp",
         "resourceType": "image",
-        "startedMs": 3064,
+        "startedMs": 1351,
         "status": 200,
-        "responseMs": 3252
+        "responseMs": 1593
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_0077-2.webp",
+        "resourceType": "image",
+        "startedMs": 1351,
+        "status": 200,
+        "responseMs": 1558
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1029.webp",
+        "resourceType": "image",
+        "startedMs": 1351,
+        "status": 200,
+        "responseMs": 1559
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95751-2.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1558
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95795.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1594
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1058.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1559
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9835-2.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1562
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9724.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1564
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_2067.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1562
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9833-2.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1567
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ93954-2.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1564
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95987.webp",
+        "resourceType": "image",
+        "startedMs": 1357,
+        "status": 200,
+        "responseMs": 1567
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95949-2.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1568
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1622.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1568
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1090.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1574
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95994.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1574
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95390.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1574
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9834-2.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95160-4.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95789-2.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95830.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1640
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ93814.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_0116.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95484-2.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1580
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95969.webp",
+        "resourceType": "image",
+        "startedMs": 1358,
+        "status": 200,
+        "responseMs": 1583
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1110.webp",
+        "resourceType": "image",
+        "startedMs": 1359,
+        "status": 200,
+        "responseMs": 1583
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9428-Edit-2.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1641
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ99001.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1583
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95963.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1583
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9741-2.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1584
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9668.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1584
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ98297.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1584
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ94256.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1584
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_1077.webp",
+        "resourceType": "image",
+        "startedMs": 1365,
+        "status": 200,
+        "responseMs": 1585
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_0061.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1585
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_9634.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1585
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95048-2.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1669
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_2277.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1586
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_0336-2.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1586
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ98368.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1587
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_2038.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1588
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ94194.webp",
+        "resourceType": "image",
+        "startedMs": 1366,
+        "status": 200,
+        "responseMs": 1590
+      },
+      {
+        "path": "/images/portfolio-thumbs/IMG_2388.webp",
+        "resourceType": "image",
+        "startedMs": 1367,
+        "status": 200,
+        "responseMs": 1591
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95745.webp",
+        "resourceType": "image",
+        "startedMs": 1367,
+        "status": 200,
+        "responseMs": 1592
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95961.webp",
+        "resourceType": "image",
+        "startedMs": 1367,
+        "status": 200,
+        "responseMs": 1592
+      },
+      {
+        "path": "/images/portfolio-thumbs/_NZ95572.webp",
+        "resourceType": "image",
+        "startedMs": 1367,
+        "status": 200,
+        "responseMs": 1592
       }
     ],
     "failures": []

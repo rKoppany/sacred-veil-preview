@@ -4,6 +4,7 @@ const isAppleTouchDevice =
   /iPhone|iPad|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+const useSyntheticPageTurn = !reducedMotion && !isAppleTouchDevice;
 body.classList.toggle("is-iphone", isIPhone);
 body.classList.toggle("is-apple-touch", isAppleTouchDevice);
 let isNavigating = false;
@@ -1234,7 +1235,7 @@ const takePreparedViewportSnapshot = () => {
 };
 
 const schedulePreparedViewportSnapshot = (delay = 650, { ignoreIdle = false } = {}) => {
-  if (!isAppleTouchDevice || reducedMotion || isNavigating) return;
+  if (!isAppleTouchDevice || !useSyntheticPageTurn || isNavigating) return;
   const isPortfolioPage = Boolean(document.querySelector("[data-portfolio-masonry]"));
   const requiredIdleTime = isPortfolioPage ? 3200 : 1400;
 
@@ -2384,7 +2385,7 @@ const navigateWithPageTurn = async (url, preparedSnapshotPromise = null) => {
   body.classList.add("is-page-turning");
 
   try {
-    if (reducedMotion) {
+    if (!useSyntheticPageTurn) {
       await navigateWithoutAnimation(url, true);
       finishNavigation();
       return;
@@ -2512,11 +2513,10 @@ const startInternalNavigation = (url, preparedSnapshotPromise = null) => {
 const warmInternalLink = (link) => {
   const url = getInternalNavigationUrl(link);
   if (!url) return null;
+  if (!useSyntheticPageTurn) return url;
   loadDocument(url).catch(() => {});
-  if (!isAppleTouchDevice && !reducedMotion) {
-    loadHtml2Canvas().catch(() => {});
-    loadPackedLaceAnalysis().catch(() => {});
-  }
+  loadHtml2Canvas().catch(() => {});
+  loadPackedLaceAnalysis().catch(() => {});
   return url;
 };
 
@@ -2535,9 +2535,7 @@ document.addEventListener("focusin", (event) => {
 
 document.addEventListener("pointerdown", (event) => {
   if (event.pointerType !== "touch" || event.isPrimary === false) return;
-  if (isAppleTouchDevice) {
-    lastAppleInteractionAt = performance.now();
-  }
+  if (isAppleTouchDevice) return;
   const target = event.target instanceof Element ? event.target : null;
   const link = target?.closest("a[href]");
   const url = link ? warmInternalLink(link) : null;
@@ -2601,6 +2599,10 @@ document.addEventListener("click", (event) => {
   const url = getInternalNavigationUrl(link);
 
   if (!url) {
+    return;
+  }
+
+  if (isAppleTouchDevice) {
     return;
   }
 

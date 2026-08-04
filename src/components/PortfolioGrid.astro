@@ -92,6 +92,7 @@ const portfolioImages = buildMixedOrder(
         name: entry.name,
         orientation: size.width >= size.height ? "landscape" : "portrait" as "portrait" | "landscape",
         src: `images/portfolio-full/${encodeURIComponent(entry.name)}`,
+        displaySrc: `images/portfolio-display/${encodeURIComponent(`${basename(entry.name, extname(entry.name))}.webp`)}`,
         thumbnailSrc: `images/portfolio-thumbs/${encodeURIComponent(`${basename(entry.name, extname(entry.name))}.webp`)}`
       };
     })
@@ -106,7 +107,7 @@ const portfolioImages = buildMixedOrder(
           class="portfolio-card"
           type="button"
           data-aspect={image.aspect}
-          data-lightbox={image.src}
+          data-lightbox={image.displaySrc}
           data-orientation={image.orientation}
           aria-label={`Sacred Veil portfóliófotó ${index + 1} megnyitása`}
         >
@@ -115,9 +116,10 @@ const portfolioImages = buildMixedOrder(
             alt={`Sacred Veil portfóliófotó ${index + 1}`}
             width={image.width}
             height={image.height}
-            loading="eager"
-            fetchpriority={index < 2 ? "high" : "auto"}
+            loading={index < 4 ? "eager" : "lazy"}
+            fetchpriority={index < 2 ? "high" : index < 8 ? "auto" : "low"}
             decoding="async"
+            sizes="(max-width: 599px) 86vw, (max-width: 759px) 42vw, (orientation: landscape) 20vw, 30vw"
             data-portfolio-image
           />
         </button>

@@ -1,7 +1,7 @@
 [
   {
     "profile": "iPhone 11",
-    "navigationMs": 840.0855999999999,
+    "navigationMs": 373.67010000000005,
     "finalUrl": "http://127.0.0.1:4382/portfolio.html",
     "portfolio": {
       "cardCount": 66,
@@ -16,7 +16,7 @@
   },
   {
     "profile": "iPhone 14",
-    "navigationMs": 952.8562999999995,
+    "navigationMs": 453.26920000000064,
     "finalUrl": "http://127.0.0.1:4382/portfolio.html",
     "portfolio": {
       "cardCount": 66,
@@ -31,7 +31,7 @@
   },
   {
     "profile": "iPad (gen 6)",
-    "navigationMs": 587.1270999999979,
+    "navigationMs": 384.6861000000008,
     "finalUrl": "http://127.0.0.1:4382/portfolio.html",
     "portfolio": {
       "cardCount": 66,
