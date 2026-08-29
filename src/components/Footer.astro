@@ -5,7 +5,7 @@ import { navItems } from "../data/site";
 <footer class="border-t border-taupe/10 bg-ink px-5 py-14 text-ivory">
   <div class="container grid gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
     <div>
-      <a href="index.html" class="inline-flex items-center gap-3 font-display text-4xl">
+      <a href="/" class="inline-flex items-center gap-3 font-display text-4xl">
         <span class="brand-mark h-11 w-11">
           <img src="images/brand/sacred-veil-logo-transparent-192.webp?v=20260802" alt="" loading="lazy" />
         </span>
@@ -20,7 +20,7 @@ import { navItems } from "../data/site";
       <h2 class="text-sm font-bold uppercase tracking-[0.14em] text-champagne">Oldalak</h2>
       <div class="mt-4 grid gap-2 text-sm text-ivory/78">
         {navItems.map((item) => <a class="hover:text-white" href={item.href}>{item.label}</a>)}
-        <a class="hover:text-white" href="aszf.html">Általános Szerződési Feltételek</a>
+        <a class="hover:text-white" href="/aszf">Általános Szerződési Feltételek</a>
       </div>
     </div>
     <div>

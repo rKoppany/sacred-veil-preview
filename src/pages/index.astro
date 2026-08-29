@@ -28,7 +28,7 @@ const heroSrcSet = [
             Őszintén, elegánsan és természetesen.
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
-            <a class="button button-primary bg-ivory text-ink" href="portfolio.html">Portfólió</a>
+            <a class="button button-primary bg-ivory text-ink" href="/portfolio">Portfólió</a>
           </div>
         </div>
       </div>
@@ -59,7 +59,7 @@ const heroSrcSet = [
         <div>
           <h2 class="section-title">Pillanatok, amelyek vezetik a történetet.</h2>
         </div>
-        <a class="button button-secondary" href="portfolio.html">Teljes portfólió</a>
+        <a class="button button-secondary" href="/portfolio">Teljes portfólió</a>
       </div>
       <div class="grid gap-5 md:grid-cols-3">
         {featuredImages.map((image, index) => (
@@ -89,7 +89,7 @@ const heroSrcSet = [
           ["Essence", "Polgári fotózás 3-4 órában, 200 átadott képpel és 15 ajándék nyomattal.", "images/portfolio/portfolio-12.webp"],
           ["Sacrée", "Egész napos esküvői történetmesélés 700 átadott képpel és 30 ajándék nyomattal.", "images/portfolio/portfolio-07.webp"]
         ].map(([title, text, image]) => (
-          <a href="szolgaltatasok.html" class="group block overflow-hidden rounded-lg bg-white shadow-soft">
+          <a href="/csomagok" class="group block overflow-hidden rounded-lg bg-white shadow-soft">
             <div class="aspect-[4/3] overflow-hidden">
               <img src={image} alt={`${title} előnézet`} loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
             </div>
@@ -125,7 +125,7 @@ const heroSrcSet = [
     <div class="container text-center">
       <p class="eyebrow">Következő lépés</p>
       <h2 class="home-next-title section-title mx-auto mt-4">Írjátok meg elképzeléseiteket és elvárásaitokat, és találjuk meg együtt a hozzátok illő lehetőségeket, hogy méltó módon legyen megörökítve életetek egyik legfontosabb mérföldköve.</h2>
-      <a class="button button-primary mt-8" href="kapcsolat.html">Kérek személyre szabott ajánlatot</a>
+      <a class="button button-primary mt-8" href="/kapcsolat">Kérek személyre szabott ajánlatot</a>
     </div>
   </section>
 </Layout>

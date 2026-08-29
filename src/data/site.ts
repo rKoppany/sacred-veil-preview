@@ -1,9 +1,9 @@
 export const navItems = [
-  { href: "index.html", label: "Főoldal" },
-  { href: "rolunk.html", label: "Rólunk" },
-  { href: "szolgaltatasok.html", label: "Csomagok" },
-  { href: "portfolio.html", label: "Portfólió" },
-  { href: "kapcsolat.html", label: "Kapcsolat" }
+  { href: "/", label: "Főoldal" },
+  { href: "/rolunk", label: "Rólunk" },
+  { href: "/csomagok", label: "Csomagok" },
+  { href: "/portfolio", label: "Portfólió" },
+  { href: "/kapcsolat", label: "Kapcsolat" }
 ];
 
 export const portfolioImages = Array.from({ length: 36 }, (_, index) => {

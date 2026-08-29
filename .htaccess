@@ -1,5 +1,21 @@
 DirectoryIndex index.html index.php
 
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteRule ^index\.html$ / [R=301,L]
+
+  RewriteRule ^szolgaltatasok(?:\.html|/)?$ /csomagok [R=301,L,NC]
+  RewriteRule ^(rolunk|portfolio|kapcsolat|aszf)\.html$ /$1 [R=301,L,NC]
+  RewriteRule ^(rolunk|csomagok|portfolio|kapcsolat|aszf)/$ /$1 [R=301,L,NC]
+
+  RewriteRule ^rolunk$ rolunk.html [L]
+  RewriteRule ^csomagok$ szolgaltatasok.html [L]
+  RewriteRule ^portfolio$ portfolio.html [L]
+  RewriteRule ^kapcsolat$ kapcsolat.html [L]
+  RewriteRule ^aszf$ aszf.html [L]
+</IfModule>
+
 <IfModule mod_headers.c>
   <FilesMatch "\.(?:css|js|mjs|woff2|webp|avif|png|jpg|jpeg|gif|svg|ico)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
