@@ -3,10 +3,15 @@ DirectoryIndex index.html index.php
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
   RewriteRule ^index\.html$ / [R=301,L]
 
+  RewriteCond %{THE_REQUEST} \s/+szolgaltatasok(?:\.html|/)?[\s?] [NC]
   RewriteRule ^szolgaltatasok(?:\.html|/)?$ /csomagok [R=301,L,NC]
+
+  RewriteCond %{THE_REQUEST} \s/+(?:rolunk|portfolio|kapcsolat|aszf)\.html[\s?] [NC]
   RewriteRule ^(rolunk|portfolio|kapcsolat|aszf)\.html$ /$1 [R=301,L,NC]
+
   RewriteRule ^(rolunk|csomagok|portfolio|kapcsolat|aszf)/$ /$1 [R=301,L,NC]
 
   RewriteRule ^rolunk$ rolunk.html [L]
